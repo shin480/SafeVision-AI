@@ -1,0 +1,17 @@
+pillow 
+requests
+ultralytics
+opencv-python 
+numpy 
+matplotlib 
+
+flask 
+fastapi==0.111.0
+uvicorn==0.29.0
+python-dotenv==1.0.1
+
+sqlalchemy>=2.0.0
+pymysql
+
+apscheduler==3.10.4
+pandas>=2.2.2
