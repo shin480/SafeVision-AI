@@ -1,4 +1,10 @@
-// 공통 기능 파일
-// 여러 페이지에서 함께 사용할 기능을 작성한다.
+// 로그인 여부 확인
+// login.html을 거치지 않고 대시보드나 관리 페이지에 접근하는 것을 막기 위한 임시 코드
+
+const isLogin = sessionStorage.getItem("isLogin");
+
+if (!isLogin) {
+  location.href = "./login.html";
+}
 
 console.log("SafeVision-AI common.js loaded");
