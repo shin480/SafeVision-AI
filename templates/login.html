@@ -2,9 +2,12 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>SafeVision-AI Login</title>
-  <link rel="stylesheet" href="./css/style.css">
-  <script src="./js/login.js" defer></script>
+  <title>SafeVision-AI Dashboard</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <script src="{{ url_for('static', filename='js/common.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/login.js') }}" defer></script>
 </head>
 <body>
   <main class="login-page">

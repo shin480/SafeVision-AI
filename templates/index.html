@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>SafeVision-AI Dashboard</title>
-  <link rel="stylesheet" href="./css/style.css">
-  <script src="./js/common.js" defer></script>
-  <script src="./js/dashboard.js" defer></script>
+    <meta charset="UTF-8">
+    <title>SafeVision-AI Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <script src="{{ url_for('static', filename='js/common.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
 </head>
 <body>
   <div class="layout">

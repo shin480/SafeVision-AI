@@ -15,6 +15,26 @@ app = Flask(
 def index():
     return render_template("index.html")
 
+@app.route("/login.html")
+def login():
+    return render_template("login.html")
+
+@app.route("/monitoring.html")
+def monitoring():
+    return render_template("monitoring.html")
+
+@app.route("/event-log.html")
+def event_log():
+    return render_template("event-log.html")
+
+@app.route("/cctv-manage.html")
+def cctv_manage():
+    return render_template("cctv-manage.html")
+
+@app.route("/index.html")
+def dashboard():
+    return render_template("index.html")
+
 @app.route("/db")
 def db():
     response = requests.get(f"{FASTAPI_URL}/db")

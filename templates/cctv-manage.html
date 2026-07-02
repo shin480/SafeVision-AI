@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>SafeVision-AI CCTV Manage</title>
-  <link rel="stylesheet" href="./css/style.css">
-  <script src="./js/common.js" defer></script>
-  <script src="./js/cctv-manage.js" defer></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <script src="{{ url_for('static', filename='js/common.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/cctv-manage.js') }}" defer></script>
 </head>
 <body>
   <div class="layout">
