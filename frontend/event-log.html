@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>SafeVision-AI Event Log</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="./js/common.js" defer></script>
+  <script src="./js/event-log.js" defer></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">SafeVision-AI</div>
+
+      <nav class="nav-menu">
+        <a href="./index.html" class="nav-link">대시보드</a>
+        <a href="./monitoring.html" class="nav-link">실시간 모니터링</a>
+        <a href="./event-log.html" class="nav-link active">이벤트 로그</a>
+        <a href="./cctv-manage.html" class="nav-link">CCTV 관리</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="header">
+        <h1>이벤트 로그</h1>
+        <div class="header-info">Violation Event History</div>
+      </header>
+
+      <section class="content-section">
+        <div class="section-title">로그 필터</div>
+
+        <div class="form-row">
+          <input class="input" type="date">
+          <select class="input">
+            <option>전체 등급</option>
+            <option>SAFE</option>
+            <option>WARNING</option>
+            <option>DANGER</option>
+            <option>CRITICAL</option>
+          </select>
+          <select class="input">
+            <option>전체 CCTV</option>
+            <option>CAM-01</option>
+            <option>CAM-02</option>
+            <option>CAM-03</option>
+          </select>
+          <button class="button">검색</button>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <div class="section-title">위험 이벤트 목록</div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>시간</th>
+              <th>CCTV</th>
+              <th>감지 내용</th>
+              <th>위험 점수</th>
+              <th>등급</th>
+              <th>처리</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>2026-07-02 10:24</td>
+              <td>CAM-01</td>
+              <td>안전모 미착용</td>
+              <td>35</td>
+              <td><span class="status-badge status-warning">WARNING</span></td>
+              <td>로그 저장</td>
+            </tr>
+
+            <tr>
+              <td>2026-07-02 10:31</td>
+              <td>CAM-02</td>
+              <td>안전조끼 미착용 + 위험구역 침입</td>
+              <td>75</td>
+              <td><span class="status-badge status-danger">DANGER</span></td>
+              <td>캡처 + 로그</td>
+            </tr>
+
+            <tr>
+              <td>2026-07-02 10:42</td>
+              <td>CAM-03</td>
+              <td>안전모 미착용 + 안전조끼 미착용 + 위험구역 침입</td>
+              <td>100</td>
+              <td><span class="status-badge status-critical">CRITICAL</span></td>
+              <td>캡처 + 강조 표시</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
