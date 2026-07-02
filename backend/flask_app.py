@@ -35,6 +35,7 @@ def cctv_manage():
 def dashboard():
     return render_template("index.html")
 
+# db 연결 테스트 
 @app.route("/db")
 def db():
     response = requests.get(f"{FASTAPI_URL}/db")
