@@ -1,0 +1,48 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# YOLO / Ultralytics outputs
+runs/
+*.pt
+*.onnx
+*.engine
+*.tflite
+*.torchscript
+
+# Datasets
+helmet_dataset/
+vest_dataset/
+person_dataset/
+ppe_dataset/
+
+# Large media
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.mp4
+*.avi
+*.mov
+
+# Roboflow metadata
+README.roboflow.txt
+README.dataset.txt
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
