@@ -4,9 +4,9 @@ from sqlalchemy import text
 from fastapi import FastAPI, Query, UploadFile, File
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
+from fastapi.responses import StreamingResponse, JSONResponse
 
 app = FastAPI()
-app.mount("/view", StaticFiles(directory="frontend"))
 
 app.add_middleware(SessionMiddleware, secret_key="motmachugetjyo")
 
