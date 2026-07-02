@@ -43,3 +43,12 @@ SafeVision-AI/
 │  ├─ class_names.md
 │  └─ roles.md
 └─ README.md
+```
+
+## Tech Stack
+
+- Python
+- YOLO
+- OpenCV
+- FastAPI
+- HTML/CSS/JavaScript
