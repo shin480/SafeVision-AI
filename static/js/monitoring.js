@@ -3,6 +3,47 @@ const API = {
   monitoringStatus: "/api/monitoring/status",
 };
 
+/* =========================
+   모니터링 sidebar 처리
+========================= */
+
+function setMonitoringSidebarActive() {
+  const menuItems = document.querySelectorAll(".menu-item");
+
+  menuItems.forEach((item) => {
+    item.classList.remove("active");
+
+    const href = item.getAttribute("href");
+    const pageName = item.dataset.page;
+
+    if (href === "./monitoring.html" || pageName === "monitoring") {
+      item.classList.add("active");
+    }
+  });
+}
+
+function loadMonitoringSidebar() {
+  const sidebarContainer = document.querySelector("#sidebar-container");
+
+  if (!sidebarContainer) {
+    return;
+  }
+
+  fetch("./sidebar.html")
+    .then((res) => res.text())
+    .then((html) => {
+      sidebarContainer.innerHTML = html;
+      setMonitoringSidebarActive();
+    })
+    .catch((error) => {
+      console.error("sidebar 로드 실패:", error);
+    });
+}
+
+/* =========================
+   모니터링 데이터 처리
+========================= */
+
 function getRiskClass(riskLevel) {
   switch (riskLevel) {
     case "SAFE":
@@ -132,6 +173,8 @@ async function loadMonitoringStatus(cctvId) {
 }
 
 function initMonitoring() {
+  loadMonitoringSidebar();
+
   resetMonitoringView();
   loadCctvList();
 
