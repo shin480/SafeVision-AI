@@ -1,6 +1,6 @@
 let events = [];
 
-fetch("./sidebar.html")
+fetch("/sidebar")
   .then((res) => res.text())
   .then((html) => {
     document.getElementById("sidebar-container").innerHTML = html;

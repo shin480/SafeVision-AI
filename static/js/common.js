@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const sidebarContainer = document.querySelector("#sidebar-container");
 
   if (sidebarContainer) {
-    fetch("./sidebar.html")
+    fetch("/sidebar")
       .then((response) => {
         if (!response.ok) {
           throw new Error("sidebar.html을 불러오지 못했습니다.");
@@ -21,4 +21,16 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("sidebar 로드 실패:", error);
       });
   }
+});
+
+/* sidebar가 나중에 들어와도 로그아웃 클릭을 잡기 위한 이벤트 위임 */
+document.addEventListener("click", (event) => {
+  const logoutBtn = event.target.closest("#logoutBtn");
+
+  if (!logoutBtn) {
+    return;
+  }
+
+  sessionStorage.removeItem("isLogin");
+  location.href = "/login";
 });
