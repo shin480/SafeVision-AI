@@ -6,12 +6,16 @@ body {
   margin: 0;
   font-family: Pretendard, Arial, sans-serif;
   color: #1f2937;
-  background: #f4f7fa;
+}
+
+button,
+input {
+  font-family: inherit;
 }
 
 a {
-  text-decoration: none;
   color: inherit;
+  text-decoration: none;
 }
 
 button,
