@@ -66,3 +66,22 @@ select {
 .btn-primary:hover {
   background: #079548;
 }
+
+/* =========================
+   공통 페이지 제목 기준
+========================= */
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 34px 48px 36px !important;
+  background: #f4f7fa;
+}
+
+.main h1 {
+  margin: 0 0 36px !important;
+  font-size: 36px !important;
+  font-weight: 800 !important;
+  color: #1f2937 !important;
+  letter-spacing: -1px;
+}
