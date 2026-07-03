@@ -1,79 +1,4 @@
-const dashboardData = {
-  overallStatus: {
-    status: "SAFE",
-    text: "안전",
-  },
-
-  todayWarning: {
-    count: 12,
-    change: "+3",
-    changeText: "(어제 대비)",
-  },
-
-  ppeRate: {
-    rate: 92.3,
-    change: "+2.1%",
-    changeText: "(어제 대비)",
-  },
-
-  cctv: {
-    connected: 3,
-    total: 3,
-    text: "정상 연결",
-  },
-
-  recentEvents: [
-    {
-      time: "2026-07-02 14:35:21",
-      cctv: "1번 CCTV",
-      violation: "안전모 미착용",
-      riskLevel: "DANGER",
-      status: "미확인",
-    },
-    {
-      time: "2026-07-02 14:32:10",
-      cctv: "2번 CCTV",
-      violation: "위험구역 진입",
-      riskLevel: "WARNING",
-      status: "확인",
-    },
-    {
-      time: "2026-07-02 14:28:45",
-      cctv: "1번 CCTV",
-      violation: "안전조끼 미착용",
-      riskLevel: "DANGER",
-      status: "미확인",
-    },
-    {
-      time: "2026-07-02 14:20:33",
-      cctv: "1번 CCTV",
-      violation: "안전모, 안전조끼 미착용",
-      riskLevel: "CRITICAL",
-      status: "미확인",
-    },
-    {
-      time: "2026-07-02 14:18:11",
-      cctv: "3번 CCTV",
-      violation: "PPE 복합 위반",
-      riskLevel: "CRITICAL",
-      status: "조치완료",
-    },
-    {
-      time: "2026-07-02 14:15:02",
-      cctv: "1번 CCTV",
-      violation: "안전모 미착용",
-      riskLevel: "WARNING",
-      status: "미확인",
-    },
-    {
-      time: "2026-07-02 14:10:47",
-      cctv: "2번 CCTV",
-      violation: "안전모 미착용",
-      riskLevel: "DANGER",
-      status: "확인",
-    },
-  ],
-};
+const DASHBOARD_API = "/api/dashboard";
 
 function getRiskLevelClass(riskLevel) {
   switch (riskLevel) {
@@ -105,24 +30,69 @@ function setText(selector, value) {
     return;
   }
 
-  element.textContent = value;
+  element.textContent = value ?? "-";
+}
+
+function resetDashboard() {
+  setText("#overallStatus", "-");
+  setText("#overallStatusText", "-");
+
+  setText("#todayWarningCount", "-");
+  setText("#todayWarningChange", "-");
+
+  setText("#ppeRate", "-");
+  setText("#ppeRateChange", "-");
+
+  setText("#cctvStatus", "-");
+  setText("#cctvStatusText", "-");
+
+  const tbody = document.querySelector("#recentEventTable");
+
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5">데이터를 불러오는 중입니다.</td>
+      </tr>
+    `;
+  }
 }
 
 function renderSummary(data) {
-  setText("#overallStatus", data.overallStatus.status);
-  setText("#overallStatusText", data.overallStatus.text);
+  setText("#overallStatus", data.overallStatus?.status);
+  setText("#overallStatusText", data.overallStatus?.text);
 
-  setText("#todayWarningCount", data.todayWarning.count);
+  setText("#todayWarningCount", data.todayWarning?.count);
+
+  const warningChange = data.todayWarning?.change;
+  const warningChangeText = data.todayWarning?.changeText;
+
   setText(
     "#todayWarningChange",
-    `${data.todayWarning.change} ${data.todayWarning.changeText}`
+    warningChange && warningChangeText
+      ? `${warningChange} ${warningChangeText}`
+      : "-"
   );
 
-  setText("#ppeRate", `${data.ppeRate.rate}%`);
-  setText("#ppeRateChange", `${data.ppeRate.change} ${data.ppeRate.changeText}`);
+  const ppeRate = data.ppeRate?.rate;
+  setText("#ppeRate", ppeRate !== undefined && ppeRate !== null ? `${ppeRate}%` : "-");
 
-  setText("#cctvStatus", `${data.cctv.connected} / ${data.cctv.total}`);
-  setText("#cctvStatusText", data.cctv.text);
+  const ppeChange = data.ppeRate?.change;
+  const ppeChangeText = data.ppeRate?.changeText;
+
+  setText(
+    "#ppeRateChange",
+    ppeChange && ppeChangeText ? `${ppeChange} ${ppeChangeText}` : "-"
+  );
+
+  const connected = data.cctv?.connected;
+  const total = data.cctv?.total;
+
+  setText(
+    "#cctvStatus",
+    connected !== undefined && total !== undefined ? `${connected} / ${total}` : "-"
+  );
+
+  setText("#cctvStatusText", data.cctv?.text);
 }
 
 function renderRecentEvents(events) {
@@ -134,24 +104,57 @@ function renderRecentEvents(events) {
 
   tbody.innerHTML = "";
 
+  if (!events || events.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5">최근 이벤트가 없습니다.</td>
+      </tr>
+    `;
+    return;
+  }
+
   events.forEach((event) => {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${event.time}</td>
-      <td>${event.cctv}</td>
-      <td>${event.violation}</td>
-      <td class="${getRiskLevelClass(event.riskLevel)}">${event.riskLevel}</td>
-      <td class="${getStatusClass(event.status)}">${event.status}</td>
+      <td>${event.time ?? "-"}</td>
+      <td>${event.cctv ?? "-"}</td>
+      <td>${event.violation ?? "-"}</td>
+      <td class="${getRiskLevelClass(event.riskLevel)}">${event.riskLevel ?? "-"}</td>
+      <td class="${getStatusClass(event.status)}">${event.status ?? "-"}</td>
     `;
 
     tbody.appendChild(tr);
   });
 }
 
-function initDashboard() {
-  renderSummary(dashboardData);
-  renderRecentEvents(dashboardData.recentEvents);
+async function loadDashboard() {
+  resetDashboard();
+
+  try {
+    const response = await fetch(DASHBOARD_API);
+
+    if (!response.ok) {
+      throw new Error("대시보드 데이터 조회 실패");
+    }
+
+    const data = await response.json();
+
+    renderSummary(data);
+    renderRecentEvents(data.recentEvents);
+  } catch (error) {
+    console.error(error);
+
+    const tbody = document.querySelector("#recentEventTable");
+
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5">대시보드 데이터를 불러오지 못했습니다.</td>
+        </tr>
+      `;
+    }
+  }
 }
 
-document.addEventListener("DOMContentLoaded", initDashboard);
+document.addEventListener("DOMContentLoaded", loadDashboard);

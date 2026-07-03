@@ -1,13 +1,6 @@
-const monitoringData = {
-  cctvId: "1",
-  riskLevel: "DANGER",
-  riskText: "위험",
-  riskScore: 65,
-  violations: {
-    helmet: 1,
-    vest: 1,
-    zone: 0,
-  },
+const API = {
+  cctvList: "/api/cctv",
+  monitoringStatus: "/api/monitoring/status",
 };
 
 function getRiskClass(riskLevel) {
@@ -25,42 +18,131 @@ function getRiskClass(riskLevel) {
   }
 }
 
+function setText(selector, value) {
+  const element = document.querySelector(selector);
+
+  if (!element) {
+    return;
+  }
+
+  element.textContent = value ?? "-";
+}
+
+function resetMonitoringView() {
+  setText("#currentRiskLevel", "-");
+  setText("#currentRiskText", "-");
+  setText("#riskScore", "-");
+  setText("#helmetViolation", "-");
+  setText("#vestViolation", "-");
+  setText("#zoneViolation", "-");
+
+  const riskLevelEl = document.querySelector("#currentRiskLevel");
+  const riskTextEl = document.querySelector("#currentRiskText");
+
+  if (riskLevelEl) {
+    riskLevelEl.className = "";
+  }
+
+  if (riskTextEl) {
+    riskTextEl.className = "";
+  }
+}
+
+function renderCctvOptions(cctvList) {
+  const cctvSelect = document.querySelector("#cctvSelect");
+
+  if (!cctvSelect) {
+    return;
+  }
+
+  cctvSelect.innerHTML = `<option value="">CCTV 선택</option>`;
+
+  cctvList.forEach((cctv) => {
+    const option = document.createElement("option");
+
+    option.value = cctv.id;
+    option.textContent = cctv.name;
+
+    cctvSelect.appendChild(option);
+  });
+}
+
 function renderMonitoring(data) {
   const riskLevelEl = document.querySelector("#currentRiskLevel");
   const riskTextEl = document.querySelector("#currentRiskText");
 
-  riskLevelEl.textContent = data.riskLevel;
-  riskTextEl.textContent = data.riskText;
-
   const riskClass = getRiskClass(data.riskLevel);
-  riskLevelEl.className = riskClass;
-  riskTextEl.className = riskClass;
 
-  document.querySelector("#riskScore").textContent = `${data.riskScore} / 100`;
+  if (riskLevelEl) {
+    riskLevelEl.textContent = data.riskLevel ?? "-";
+    riskLevelEl.className = riskClass;
+  }
 
-  document.querySelector("#helmetViolation").textContent = data.violations.helmet;
-  document.querySelector("#vestViolation").textContent = data.violations.vest;
-  document.querySelector("#zoneViolation").textContent = data.violations.zone;
+  if (riskTextEl) {
+    riskTextEl.textContent = data.riskText ?? "-";
+    riskTextEl.className = riskClass;
+  }
+
+  setText(
+    "#riskScore",
+    data.riskScore !== undefined && data.riskScore !== null
+      ? `${data.riskScore} / 100`
+      : "-"
+  );
+
+  setText("#helmetViolation", data.violations?.helmet);
+  setText("#vestViolation", data.violations?.vest);
+  setText("#zoneViolation", data.violations?.zone);
 }
 
-function handleCctvSearch() {
-  const selectedCctv = document.querySelector("#cctvSelect").value;
+async function loadCctvList() {
+  try {
+    const response = await fetch(API.cctvList);
 
-  console.log(`${selectedCctv}번 CCTV 검색`);
+    if (!response.ok) {
+      throw new Error("CCTV 목록 조회 실패");
+    }
 
-  // 나중에 여기서 API 호출하면 됨.
-  // fetch(`/api/monitoring?cctv=${selectedCctv}`)
-  //   .then((res) => res.json())
-  //   .then((data) => renderMonitoring(data));
+    const cctvList = await response.json();
+    renderCctvOptions(cctvList);
+  } catch (error) {
+    console.error(error);
+  }
+}
 
-  renderMonitoring(monitoringData);
+async function loadMonitoringStatus(cctvId) {
+  if (!cctvId) {
+    resetMonitoringView();
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API.monitoringStatus}?cctvId=${cctvId}`);
+
+    if (!response.ok) {
+      throw new Error("모니터링 상태 조회 실패");
+    }
+
+    const data = await response.json();
+    renderMonitoring(data);
+  } catch (error) {
+    console.error(error);
+    resetMonitoringView();
+  }
 }
 
 function initMonitoring() {
-  renderMonitoring(monitoringData);
+  resetMonitoringView();
+  loadCctvList();
 
   const searchBtn = document.querySelector("#searchBtn");
-  searchBtn.addEventListener("click", handleCctvSearch);
+  const cctvSelect = document.querySelector("#cctvSelect");
+
+  if (searchBtn && cctvSelect) {
+    searchBtn.addEventListener("click", () => {
+      loadMonitoringStatus(cctvSelect.value);
+    });
+  }
 }
 
 document.addEventListener("DOMContentLoaded", initMonitoring);
