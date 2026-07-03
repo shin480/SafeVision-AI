@@ -1,3 +1,12 @@
+:root {
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #374151;
+  --sidebar-title: #1f2937;
+  --main-green: #03a94d;
+  --active-bg: rgba(3, 169, 77, 0.12);
+  --hover-bg: rgba(3, 169, 77, 0.08);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -7,21 +16,31 @@
 body {
   display: flex;
   background-color: #f4f7fa;
-  font-family: Arial, sans-serif;
 }
 
+/* sidebar.html이 들어가는 영역 */
+#sidebar-container {
+  width: 245px;
+  min-width: 245px;
+  max-width: 245px;
+  height: 100vh;
+  flex-shrink: 0;
+}
+
+/* 실제 사이드바 */
 .sidebar {
   width: 245px;
   min-width: 245px;
   max-width: 245px;
   height: 100vh;
-  background-color: #ffffff;
+  background-color: var(--sidebar-bg);
   border-right: 1px solid #e5e7eb;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
   padding-top: 24px;
   flex-shrink: 0;
 }
 
+/* 상단 로고 영역 */
 .logo {
   display: flex;
   align-items: center;
@@ -40,15 +59,16 @@ body {
 .logo-text {
   font-size: 22px;
   font-weight: 800;
-  color: #1f2937;
+  color: var(--sidebar-title);
   letter-spacing: -0.6px;
   white-space: nowrap;
 }
 
 .logo-text strong {
-  color: #16a34a;
+  color: var(--main-green);
 }
 
+/* 메뉴 */
 .menu {
   display: flex;
   flex-direction: column;
@@ -62,7 +82,7 @@ body {
   height: 50px;
   padding-left: 28px;
   text-decoration: none;
-  color: #374151;
+  color: var(--sidebar-text);
   font-size: 13px;
   font-weight: 700;
 }
@@ -73,9 +93,16 @@ body {
   flex-shrink: 0;
 }
 
+/* 기본 아이콘 색 */
+.menu-item:not(.active) .menu-icon {
+  filter: brightness(0) saturate(100%) invert(22%) sepia(13%)
+    saturate(705%) hue-rotate(179deg) brightness(96%) contrast(91%);
+}
+
+/* 활성 메뉴 */
 .menu-item.active {
-  background-color: #dcfce7;
-  color: #059669;
+  background-color: var(--active-bg);
+  color: var(--main-green);
 }
 
 .menu-item.active::before {
@@ -85,9 +112,16 @@ body {
   top: 0;
   width: 4px;
   height: 100%;
-  background-color: #10b981;
+  background-color: var(--main-green);
 }
 
+/* 활성 아이콘 색 */
+.menu-item.active .menu-icon {
+  filter: brightness(0) saturate(100%) invert(46%) sepia(97%)
+    saturate(1042%) hue-rotate(114deg) brightness(92%) contrast(98%);
+}
+
+/* hover */
 .menu-item:hover {
-  background-color: #f0fdf4;
+  background-color: var(--hover-bg);
 }

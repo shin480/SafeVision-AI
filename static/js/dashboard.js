@@ -1,5 +1,46 @@
 const DASHBOARD_API = "/api/dashboard";
 
+/* =========================
+   대시보드 sidebar 처리
+========================= */
+
+function setDashboardSidebarActive() {
+  const menuItems = document.querySelectorAll(".menu-item");
+
+  menuItems.forEach((item) => {
+    item.classList.remove("active");
+
+    const href = item.getAttribute("href");
+    const pageName = item.dataset.page;
+
+    if (href === "./dashboard.html" || pageName === "dashboard" || pageName === "index") {
+      item.classList.add("active");
+    }
+  });
+}
+
+function loadDashboardSidebar() {
+  const sidebarContainer = document.querySelector("#sidebar-container");
+
+  if (!sidebarContainer) {
+    return;
+  }
+
+  fetch("./sidebar.html")
+    .then((res) => res.text())
+    .then((html) => {
+      sidebarContainer.innerHTML = html;
+      setDashboardSidebarActive();
+    })
+    .catch((error) => {
+      console.error("sidebar 로드 실패:", error);
+    });
+}
+
+/* =========================
+   대시보드 데이터 처리
+========================= */
+
 function getRiskLevelClass(riskLevel) {
   switch (riskLevel) {
     case "SAFE":
@@ -74,7 +115,11 @@ function renderSummary(data) {
   );
 
   const ppeRate = data.ppeRate?.rate;
-  setText("#ppeRate", ppeRate !== undefined && ppeRate !== null ? `${ppeRate}%` : "-");
+
+  setText(
+    "#ppeRate",
+    ppeRate !== undefined && ppeRate !== null ? `${ppeRate}%` : "-"
+  );
 
   const ppeChange = data.ppeRate?.change;
   const ppeChangeText = data.ppeRate?.changeText;
@@ -89,7 +134,9 @@ function renderSummary(data) {
 
   setText(
     "#cctvStatus",
-    connected !== undefined && total !== undefined ? `${connected} / ${total}` : "-"
+    connected !== undefined && total !== undefined
+      ? `${connected} / ${total}`
+      : "-"
   );
 
   setText("#cctvStatusText", data.cctv?.text);
@@ -157,4 +204,11 @@ async function loadDashboard() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", loadDashboard);
+/* =========================
+   초기 실행
+========================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadDashboardSidebar();
+  loadDashboard();
+});
