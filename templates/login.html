@@ -1,36 +1,80 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>SafeVision-AI Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <title>SafeVision AI - Login</title>
 
-  <script src="{{ url_for('static', filename='js/common.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/login.js') }}" defer></script>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/login.css" />
 </head>
 <body>
   <main class="login-page">
+    <section class="login-brand-section">
+      <div class="brand-content">
+        <div class="brand-logo">
+          <div class="shield-icon">盾</div>
+          <h1>SafeVision <span>AI</span></h1>
+        </div>
+
+        <p class="brand-subtitle">스마트 안전 관리 시스템</p>
+      </div>
+
+      <div class="construction-visual">
+        <div class="crane crane-left"></div>
+        <div class="crane crane-center"></div>
+        <div class="crane crane-right"></div>
+        <div class="excavator"></div>
+        <div class="building-line"></div>
+      </div>
+    </section>
+
     <section class="login-card">
-      <div class="login-logo">SafeVision-AI</div>
-      <p class="login-subtitle">관리자 로그인</p>
+      <form class="login-form" action="/" method="get">
+        <h2>관리자 로그인</h2>
 
-      <form id="loginForm">
-        <div class="login-field">
-          <label for="adminId">아이디</label>
-          <input id="adminId" type="text" placeholder="관리자 아이디 입력">
+        <div class="form-group">
+          <label for="admin-id">아이디</label>
+          <input
+            id="admin-id"
+            type="text"
+            name="admin_id"
+            value="admin"
+            autocomplete="username"
+          />
         </div>
 
-        <div class="login-field">
-          <label for="adminPw">비밀번호</label>
-          <input id="adminPw" type="password" placeholder="비밀번호 입력">
+        <div class="form-group">
+          <label for="admin-password">비밀번호</label>
+          <input
+            id="admin-password"
+            type="password"
+            name="admin_password"
+            value="12345678"
+            autocomplete="current-password"
+          />
         </div>
 
-        <p id="loginMessage" class="login-message"></p>
+        <div class="option-row">
+          <label class="check-label">
+            <input type="checkbox" name="save_id" />
+            <span>아이디 저장</span>
+          </label>
 
-        <button type="submit" class="button login-button">로그인</button>
+          <label class="check-label">
+            <input type="checkbox" name="auto_login" checked />
+            <span>아이디 저장</span>
+          </label>
+        </div>
+
+        <button type="submit" class="login-button">로그인</button>
       </form>
+
+      <p class="copyright">© 2026 SafeVision-AI. All rights reserved.</p>
     </section>
   </main>
+
+  <script src="/static/js/login.js"></script>
 </body>
 </html>
