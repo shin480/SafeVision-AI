@@ -12,7 +12,8 @@ app = Flask(
 )
 
 @app.route("/")
-def index():
+@app.route("/dashboard.html")
+def dashboard():
     return render_template("dashboard.html")
 
 @app.route("/login.html")
@@ -27,9 +28,9 @@ def monitoring():
 def event_log():
     return render_template("event-log.html")
 
-@app.route("/cctv-manage.html")
+@app.route("/statistics.html")
 def cctv_manage():
-    return render_template("cctv-manage.html")
+    return render_template("statistics.html")
 
 @app.route("/sidebar.html")
 def sidebar():
