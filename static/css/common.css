@@ -1,1 +1,64 @@
 # body, layout, card, button 같은 공통
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Pretendard, Arial, sans-serif;
+  color: #1f2937;
+  background: #f4f7fa;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1;
+  min-height: 100vh;
+  padding: 48px 48px 56px;
+  background: #f4f7fa;
+}
+
+.page-title {
+  margin: 0 0 56px;
+  font-size: 42px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
+.btn-primary {
+  height: 44px;
+  padding: 0 28px;
+  border: none;
+  border-radius: 6px;
+  background: #08a84f;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #079548;
+}
