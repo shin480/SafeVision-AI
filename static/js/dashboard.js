@@ -1,3 +1,17 @@
+fetch("./dashboard.html")
+  .then((res) => res.text())
+  .then((html) => {
+    document.getElementById("sidebar-container").innerHTML = html;
+
+    const currentPage = location.pathname.split("/").pop().replace(".html", "");
+
+    document.querySelectorAll(".menu-item").forEach((item) => {
+      if (item.dataset.page === currentPage) {
+        item.classList.add("active");
+      }
+    });
+  });
+
 const DASHBOARD_API = "/api/dashboard";
 
 function getRiskLevelClass(riskLevel) {
