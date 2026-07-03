@@ -81,15 +81,25 @@ function renderHourlyChart(hourlyData) {
   }
 
   hourlyChart = new Chart(ctx, {
-    type: "bar",
+    type: "line",
     data: {
       labels: labels,
       datasets: [
         {
           label: "경고 횟수",
           data: counts,
-          backgroundColor: "#08a64b",
-          borderRadius: 6
+
+          borderColor: "#08a64b",
+          backgroundColor: "rgba(8, 166, 75, 0.15)",
+
+          borderWidth: 4,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          pointBackgroundColor: "#08a64b",
+          pointBorderColor: "#08a64b",
+
+          tension: 0.35,
+          fill: true
         }
       ]
     },
