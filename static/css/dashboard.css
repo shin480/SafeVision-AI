@@ -8,13 +8,13 @@ body {
 .main {
   flex: 1;
   min-width: 0;
-  padding: 48px 48px 56px;
+  padding: 34px 48px 36px;
   background: #f4f7fa;
 }
 
 .main h1 {
-  margin: 0 0 56px;
-  font-size: 42px;
+  margin: 0 0 36px;
+  font-size: 36px;
   font-weight: 800;
   color: #1f2937;
   letter-spacing: -1px;
@@ -25,7 +25,7 @@ body {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px;
-  margin-bottom: 36px;
+  margin-bottom: 30px;
 }
 
 .summary-card {
@@ -85,7 +85,15 @@ body {
 
   font-size: 42px;
   font-weight: 900;
-  clip-path: polygon(50% 0, 100% 18%, 90% 70%, 50% 100%, 10% 70%, 0 18%);
+
+  clip-path: polygon(
+    50% 0,
+    100% 18%,
+    90% 70%,
+    50% 100%,
+    10% 70%,
+    0 18%
+  );
 }
 
 .safety-status strong {
@@ -105,16 +113,16 @@ body {
 
 /* 최근 이벤트 카드 */
 .event-card {
-  min-height: 650px;
-  padding: 38px 40px 54px;
+  min-height: 0;
+  padding: 28px 32px 34px;
   border-radius: 20px;
   background: #ffffff;
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
 }
 
 .event-card h2 {
-  margin: 0 0 38px;
-  font-size: 28px;
+  margin: 0 0 24px;
+  font-size: 24px;
   font-weight: 800;
   color: #111827;
 }
@@ -125,19 +133,19 @@ body {
   border-collapse: collapse;
   table-layout: fixed;
   text-align: center;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .event-table th {
-  height: 46px;
+  height: 38px;
   border: 1px solid #d1d5db;
   background: #f3f3f3;
   color: #111827;
 }
 
 .event-table td {
-  height: 58px;
+  height: 44px;
   border-bottom: 1px solid #d1d5db;
   border-right: 1px solid #d1d5db;
   color: #111827;
@@ -201,15 +209,4 @@ body {
 .status-pending {
   color: #111827 !important;
   font-weight: 800;
-}
-
-/* 화면이 좁아질 때 */
-@media (max-width: 1400px) {
-  .dashboard-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .summary-card {
-    height: 170px;
-  }
 }
