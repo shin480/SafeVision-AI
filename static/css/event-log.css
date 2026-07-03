@@ -20,7 +20,8 @@ body {
 
 .main {
   flex: 1;
-  padding: 34px 22px;
+  width: calc(100vw - 245px);
+  padding: 34px 36px;
 }
 
 .main h1 {
@@ -30,7 +31,8 @@ body {
 }
 
 .card {
-  width: 785px;
+  width: 100%;
+  max-width: 1400px;
   background-color: #fff;
   border-radius: 14px;
   padding: 34px 30px 28px;
@@ -42,6 +44,7 @@ body {
   align-items: center;
   gap: 14px;
   margin-bottom: 28px;
+  flex-wrap: wrap;
 }
 
 .filter-box label {
@@ -51,7 +54,7 @@ body {
 
 .filter-box input,
 .filter-box select {
-  height: 28px;
+  height: 32px;
   border: 1px solid #d1d5db;
   border-radius: 4px;
   padding: 0 10px;
@@ -60,7 +63,7 @@ body {
 
 .filter-box button {
   width: 58px;
-  height: 28px;
+  height: 32px;
   border: none;
   border-radius: 4px;
   background-color: #08a64b;
@@ -72,25 +75,25 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 13px;
   text-align: center;
 }
 
 th {
   background-color: #f3f3f3;
-  height: 32px;
+  height: 40px;
   border: 1px solid #d9d9d9;
 }
 
 td {
-  height: 40px;
+  height: 48px;
   border-bottom: 1px solid #e5e7eb;
   border-right: 1px solid #e5e7eb;
 }
 
 .detail-btn {
-  width: 58px;
-  height: 25px;
+  width: 65px;
+  height: 30px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   background-color: white;
@@ -133,10 +136,11 @@ td {
 }
 
 .modal-card {
-  width: 785px;
+  width: 90%;
+  max-width: 1100px;
   background-color: white;
   border-radius: 14px;
-  padding: 18px 26px 20px;
+  padding: 24px 30px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
@@ -148,7 +152,7 @@ td {
 
 .capture-box {
   width: 100%;
-  height: 275px;
+  height: 400px;
   background-color: #d9d9d9;
   display: flex;
   align-items: center;
@@ -160,10 +164,11 @@ td {
 
 .detail-content {
   display: flex;
+  gap: 40px;
 }
 
 .detail-left {
-  width: 48%;
+  flex: 1;
   padding-right: 40px;
   border-right: 1px solid #d1d5db;
 }
@@ -181,7 +186,7 @@ td {
 }
 
 .info-row span {
-  width: 92px;
+  width: 100px;
   font-weight: 700;
 }
 
@@ -191,7 +196,6 @@ td {
 
 .detail-right {
   flex: 1;
-  padding-left: 46px;
 }
 
 .form-row {
@@ -205,15 +209,15 @@ td {
 }
 
 .form-row select {
-  width: 205px;
-  height: 28px;
+  width: 250px;
+  height: 32px;
   border: 1px solid #d1d5db;
   border-radius: 4px;
 }
 
 .form-row textarea {
-  width: 205px;
-  height: 100px;
+  width: 250px;
+  height: 120px;
   resize: none;
   border: 1px solid #d1d5db;
   border-radius: 4px;
@@ -223,13 +227,13 @@ td {
 .modal-buttons {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin-top: 22px;
+  gap: 10px;
+  margin-top: 30px;
 }
 
 .modal-buttons button {
-  width: 110px;
-  height: 38px;
+  width: 120px;
+  height: 40px;
   border-radius: 4px;
   cursor: pointer;
 }
