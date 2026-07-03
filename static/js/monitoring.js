@@ -174,12 +174,22 @@ async function loadMonitoringStatus(cctvId) {
 
 function updateVideoFeed(cctvId) {
   const video = document.querySelector("#cctvVideo");
+  const placeholder = document.querySelector("#videoPlaceholder");
 
-  if (!video || !cctvId) {
+  if (!video || !placeholder) {
+    return;
+  }
+
+  if (!cctvId) {
+    video.removeAttribute("src");
+    video.classList.add("hidden");
+    placeholder.classList.remove("hidden");
     return;
   }
 
   video.src = `/api/video-feed/${cctvId}`;
+  video.classList.remove("hidden");
+  placeholder.classList.add("hidden");
 }
 
 function initMonitoring() {
