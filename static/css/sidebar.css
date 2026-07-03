@@ -26,20 +26,26 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 24px;
+  padding: 0 17px;
   margin-bottom: 42px;
-  font-size: 24px;
-  font-weight: 800;
-  color: #1f2937;
-}
-
-.logo strong {
-  color: #16a34a;
 }
 
 .logo-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1f2937;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
+
+.logo-text strong {
   color: #16a34a;
-  font-size: 26px;
 }
 
 .menu {
