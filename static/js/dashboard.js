@@ -1,23 +1,27 @@
 const dashboardData = {
   overallStatus: {
     status: "SAFE",
-    label: "안전",
+    text: "안전",
   },
+
   todayWarning: {
     count: 12,
     change: "+3",
-    changeLabel: "(어제 대비)",
+    changeText: "(어제 대비)",
   },
+
   ppeRate: {
     rate: 92.3,
     change: "+2.1%",
-    changeLabel: "(어제 대비)",
+    changeText: "(어제 대비)",
   },
+
   cctv: {
     connected: 3,
     total: 3,
-    label: "정상 연결",
+    text: "정상 연결",
   },
+
   recentEvents: [
     {
       time: "2026-07-02 14:35:21",
@@ -73,6 +77,8 @@ const dashboardData = {
 
 function getRiskLevelClass(riskLevel) {
   switch (riskLevel) {
+    case "SAFE":
+      return "level-safe";
     case "WARNING":
       return "level-warning";
     case "DANGER":
@@ -89,44 +95,58 @@ function getStatusClass(status) {
     return "status-done";
   }
 
-  return "";
+  return "status-pending";
+}
+
+function setText(selector, value) {
+  const element = document.querySelector(selector);
+
+  if (!element) {
+    return;
+  }
+
+  element.textContent = value;
 }
 
 function renderSummary(data) {
-  document.querySelector("#overall-status").textContent = data.overallStatus.status;
-  document.querySelector("#overall-status-label").textContent = data.overallStatus.label;
+  setText("#overallStatus", data.overallStatus.status);
+  setText("#overallStatusText", data.overallStatus.text);
 
-  document.querySelector("#today-warning-count").textContent = data.todayWarning.count;
-  document.querySelector("#warning-change").textContent = data.todayWarning.change;
-  document.querySelector("#warning-change-label").textContent = data.todayWarning.changeLabel;
+  setText("#todayWarningCount", data.todayWarning.count);
+  setText(
+    "#todayWarningChange",
+    `${data.todayWarning.change} ${data.todayWarning.changeText}`
+  );
 
-  document.querySelector("#ppe-rate").textContent = `${data.ppeRate.rate}%`;
-  document.querySelector("#ppe-change").textContent = data.ppeRate.change;
-  document.querySelector("#ppe-change-label").textContent = data.ppeRate.changeLabel;
+  setText("#ppeRate", `${data.ppeRate.rate}%`);
+  setText("#ppeRateChange", `${data.ppeRate.change} ${data.ppeRate.changeText}`);
 
-  document.querySelector("#cctv-status").textContent = `${data.cctv.connected} / ${data.cctv.total}`;
-  document.querySelector("#cctv-status-label").textContent = data.cctv.label;
+  setText("#cctvStatus", `${data.cctv.connected} / ${data.cctv.total}`);
+  setText("#cctvStatusText", data.cctv.text);
 }
 
 function renderRecentEvents(events) {
-  const tbody = document.querySelector("#recent-event-tbody");
+  const tbody = document.querySelector("#recentEventTable");
 
-  tbody.innerHTML = events
-    .map((event) => {
-      const riskClass = getRiskLevelClass(event.riskLevel);
-      const statusClass = getStatusClass(event.status);
+  if (!tbody) {
+    return;
+  }
 
-      return `
-        <tr>
-          <td>${event.time}</td>
-          <td>${event.cctv}</td>
-          <td>${event.violation}</td>
-          <td class="${riskClass}">${event.riskLevel}</td>
-          <td class="${statusClass}">${event.status}</td>
-        </tr>
-      `;
-    })
-    .join("");
+  tbody.innerHTML = "";
+
+  events.forEach((event) => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${event.time}</td>
+      <td>${event.cctv}</td>
+      <td>${event.violation}</td>
+      <td class="${getRiskLevelClass(event.riskLevel)}">${event.riskLevel}</td>
+      <td class="${getStatusClass(event.status)}">${event.status}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
 }
 
 function initDashboard() {

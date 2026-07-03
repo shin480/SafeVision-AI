@@ -1,12 +1,18 @@
-.dashboard-main {
-  flex: 1;
+body {
+  display: flex;
   min-height: 100vh;
-  padding: 48px 48px 56px;
   background: #f4f7fa;
-  overflow: auto;
+  color: #1f2937;
 }
 
-.dashboard-title {
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 48px 48px 56px;
+  background: #f4f7fa;
+}
+
+.main h1 {
   margin: 0 0 56px;
   font-size: 42px;
   font-weight: 800;
@@ -30,14 +36,14 @@
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
 }
 
-.summary-label {
+.summary-card p {
   margin: 0 0 24px;
   font-size: 16px;
   font-weight: 800;
   color: #8b8b8b;
 }
 
-.summary-value {
+.summary-card > strong {
   display: block;
   margin-bottom: 14px;
   font-size: 48px;
@@ -46,20 +52,21 @@
   letter-spacing: -1px;
 }
 
-.summary-desc {
-  margin: 0;
+.summary-card > span {
+  display: block;
   font-size: 16px;
   font-weight: 600;
   color: #8b8b8b;
 }
 
-.summary-desc span {
+.summary-card > span strong,
+.summary-card > span.plus {
   color: #03a94d;
   font-size: 20px;
   font-weight: 800;
 }
 
-/* 안전 상태 카드 */
+/* 전체 안전 상태 카드 */
 .safety-status {
   display: flex;
   align-items: center;
@@ -71,9 +78,11 @@
   height: 84px;
   background: #03a94d;
   color: #ffffff;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   font-size: 42px;
   font-weight: 900;
   clip-path: polygon(50% 0, 100% 18%, 90% 70%, 50% 100%, 10% 70%, 0 18%);
@@ -95,7 +104,7 @@
 }
 
 /* 최근 이벤트 카드 */
-.recent-events-card {
+.event-card {
   min-height: 650px;
   padding: 38px 40px 54px;
   border-radius: 20px;
@@ -103,7 +112,7 @@
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
 }
 
-.recent-events-card h2 {
+.event-card h2 {
   margin: 0 0 38px;
   font-size: 28px;
   font-weight: 800;
@@ -164,6 +173,11 @@
 }
 
 /* 위험도 색상 */
+.level-safe {
+  color: #03a94d !important;
+  font-weight: 900;
+}
+
 .level-warning {
   color: #f59e0b !important;
   font-weight: 900;
@@ -182,4 +196,20 @@
 .status-done {
   color: #027a38 !important;
   font-weight: 900;
+}
+
+.status-pending {
+  color: #111827 !important;
+  font-weight: 800;
+}
+
+/* 화면이 좁아질 때 */
+@media (max-width: 1400px) {
+  .dashboard-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summary-card {
+    height: 170px;
+  }
 }
