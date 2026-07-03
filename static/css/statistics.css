@@ -6,7 +6,9 @@
 
 body {
   display: flex;
-  background-color: #f4f7fa;
+  min-height: 100vh;
+  background: #f4f7fa;
+  color: #1f2937;
   font-family: Arial, sans-serif;
 }
 
@@ -20,160 +22,164 @@ body {
 
 .main {
   flex: 1;
-  width: calc(100vw - 245px);
-  padding: 34px 36px;
+  min-width: 0;
+  padding: 48px 48px 56px;
+  background: #f4f7fa;
 }
 
 .main h1 {
-  font-size: 30px;
+  margin: 0 0 56px;
+  font-size: 42px;
+  font-weight: 800;
   color: #1f2937;
-  margin-bottom: 28px;
+  letter-spacing: -1px;
 }
 
 .top-card {
   width: 100%;
-  max-width: 1400px;
-  background-color: white;
-  border-radius: 14px;
-  padding: 22px 28px 26px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
-  margin-bottom: 35px;
+  padding: 38px 40px 40px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+  margin-bottom: 36px;
 }
 
 .filter-box {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 22px;
+  gap: 16px;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
 }
 
 .filter-box label {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.filter-box input {
+  width: 150px;
+  height: 36px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0 12px;
   font-size: 14px;
   font-weight: 700;
 }
 
-.filter-box input {
-  width: 122px;
-  height: 28px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  padding: 0 10px;
-  font-weight: 700;
-}
-
 .filter-box button {
-  width: 58px;
-  height: 30px;
+  width: 70px;
+  height: 36px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   background-color: #08a64b;
   color: white;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
   cursor: pointer;
 }
 
 .summary-box {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
 }
 
 .summary-card {
-  height: 135px;
-  border-radius: 14px;
-  background: white;
-  padding: 18px 20px 14px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.16);
-  overflow: hidden;
+  height: 190px;
+  padding: 28px 32px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
 }
 
 .summary-card p {
-  color: #8b8f97;
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 24px;
+  margin: 0 0 24px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #8b8b8b;
 }
 
 .summary-card strong {
   display: block;
-  font-size: 36px;
-  line-height: 1.1;
-  color: black;
+  font-size: 42px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -1px;
   white-space: nowrap;
 }
 
 .chart-area {
-  display: flex;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
   width: 100%;
-  max-width: 1400px;
 }
 
 .chart-card {
-  flex: 1;
-  min-width: 0;
-  height: 420px;
-  background: white;
-  border-radius: 14px;
-  padding: 26px 28px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+  height: 520px;
+  padding: 38px 40px 54px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
   overflow: hidden;
 }
 
 .chart-card h2 {
-  font-size: 18px;
-  color: #1f2937;
-  margin-bottom: 20px;
+  margin: 0 0 38px;
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
 }
 
 .chart-box {
   width: 100%;
-  height: 320px;
+  height: 360px;
 }
 
 #hourlyChart {
   width: 100% !important;
-  height: 320px !important;
+  height: 360px !important;
 }
 
 .donut-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 34px;
-  height: 320px;
+  gap: 42px;
+  height: 360px;
 }
 
 .donut-box {
-  width: 220px;
-  height: 220px;
+  width: 250px;
+  height: 250px;
   flex-shrink: 0;
 }
 
 #typeChart {
-  width: 220px !important;
-  height: 220px !important;
+  width: 250px !important;
+  height: 250px !important;
 }
 
 #typeLegend {
   list-style: none;
-  width: 180px;
+  width: 200px;
 }
 
 #typeLegend li {
   display: flex;
   align-items: center;
-  gap: 9px;
-  margin-bottom: 20px;
-  font-size: 13px;
-  font-weight: 700;
+  gap: 10px;
+  margin-bottom: 22px;
+  font-size: 15px;
+  font-weight: 800;
   color: #374151;
   word-break: keep-all;
 }
 
 .legend-color {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   flex-shrink: 0;
 }

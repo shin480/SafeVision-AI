@@ -6,7 +6,9 @@
 
 body {
   display: flex;
-  background-color: #f4f7fa;
+  min-height: 100vh;
+  background: #f4f7fa;
+  color: #1f2937;
   font-family: Arial, sans-serif;
 }
 
@@ -20,105 +22,114 @@ body {
 
 .main {
   flex: 1;
-  width: calc(100vw - 245px);
-  padding: 34px 36px;
+  min-width: 0;
+  padding: 48px 48px 56px;
+  background: #f4f7fa;
 }
 
 .main h1 {
-  margin-bottom: 28px;
-  font-size: 30px;
+  margin: 0 0 56px;
+  font-size: 42px;
+  font-weight: 800;
   color: #1f2937;
+  letter-spacing: -1px;
 }
 
 .card {
   width: 100%;
-  max-width: 1400px;
-  background-color: #fff;
-  border-radius: 14px;
-  padding: 34px 30px 28px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+  min-height: 650px;
+  padding: 38px 40px 54px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
 }
 
 .filter-box {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 28px;
+  gap: 16px;
+  margin-bottom: 38px;
   flex-wrap: wrap;
 }
 
 .filter-box label {
-  font-weight: 700;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 800;
 }
 
 .filter-box input,
 .filter-box select {
-  height: 32px;
+  height: 36px;
   border: 1px solid #d1d5db;
-  border-radius: 4px;
-  padding: 0 10px;
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .filter-box button {
-  width: 58px;
-  height: 32px;
+  width: 70px;
+  height: 36px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   background-color: #08a64b;
   color: white;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
   cursor: pointer;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  table-layout: fixed;
   text-align: center;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 th {
-  background-color: #f3f3f3;
-  height: 40px;
-  border: 1px solid #d9d9d9;
+  height: 46px;
+  border: 1px solid #d1d5db;
+  background: #f3f3f3;
+  color: #111827;
 }
 
 td {
-  height: 48px;
-  border-bottom: 1px solid #e5e7eb;
-  border-right: 1px solid #e5e7eb;
+  height: 58px;
+  border-bottom: 1px solid #d1d5db;
+  border-right: 1px solid #d1d5db;
+  color: #111827;
 }
 
 .detail-btn {
-  width: 65px;
-  height: 30px;
+  width: 70px;
+  height: 32px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   background-color: white;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
 }
 
 .risk-warning {
   color: #ff9900;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .risk-danger {
   color: #ff3333;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .risk-critical {
   color: #9b111e;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .status-ok {
   color: #00a859;
-  font-weight: 700;
+  font-weight: 900;
 }
 
 .modal {
@@ -139,14 +150,15 @@ td {
   width: 90%;
   max-width: 1100px;
   background-color: white;
-  border-radius: 14px;
-  padding: 24px 30px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  border-radius: 20px;
+  padding: 28px 34px;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
 }
 
 .modal-card h2 {
-  margin-bottom: 18px;
-  font-size: 24px;
+  margin-bottom: 24px;
+  font-size: 28px;
+  font-weight: 800;
   color: #1f2937;
 }
 
@@ -177,17 +189,18 @@ td {
   border-left: 4px solid #08a64b;
   padding-left: 10px;
   margin-bottom: 18px;
+  font-size: 20px;
 }
 
 .info-row {
   display: flex;
   margin-bottom: 17px;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .info-row span {
   width: 100px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .info-row strong {
@@ -205,14 +218,14 @@ td {
 
 .form-row label {
   width: 95px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .form-row select {
   width: 250px;
-  height: 32px;
+  height: 36px;
   border: 1px solid #d1d5db;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .form-row textarea {
@@ -220,7 +233,7 @@ td {
   height: 120px;
   resize: none;
   border: 1px solid #d1d5db;
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 8px;
 }
 
@@ -234,7 +247,7 @@ td {
 .modal-buttons button {
   width: 120px;
   height: 40px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
@@ -242,12 +255,12 @@ td {
   border: none;
   background-color: #08a64b;
   color: white;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 #closeBtn {
   border: 1px solid #d1d5db;
   background-color: white;
   color: #6b7280;
-  font-weight: 700;
+  font-weight: 800;
 }
