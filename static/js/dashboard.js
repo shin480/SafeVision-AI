@@ -26,7 +26,7 @@ function loadDashboardSidebar() {
     return;
   }
 
-  fetch("./sidebar.html")
+  fetch("/sidebar")
     .then((res) => res.text())
     .then((html) => {
       sidebarContainer.innerHTML = html;
