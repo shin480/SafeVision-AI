@@ -1,1 +1,61 @@
-# 좌측 GNB 전용
+.sidebar {
+  width: 360px;
+  min-height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid #d9dee5;
+  flex-shrink: 0;
+}
+
+.gnb-logo {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 36px;
+  font-size: 38px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.gnb-logo-icon {
+  width: 42px;
+  height: 50px;
+  color: #08a84f;
+}
+
+.gnb-logo strong {
+  font-weight: 800;
+}
+
+.gnb-logo span {
+  color: #08a84f;
+}
+
+.gnb-menu {
+  margin-top: 10px;
+}
+
+.gnb-item {
+  height: 74px;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  padding: 0 42px;
+  border-left: 6px solid transparent;
+  color: #374151;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.gnb-item svg,
+.gnb-item img {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+}
+
+.gnb-item.active {
+  border-left-color: #08a84f;
+  background: #dcf5e8;
+  color: #078b43;
+}
