@@ -28,6 +28,12 @@ body {
 /* =======================
    영상 카드
 ======================= */
+.cctv-video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
 
 .monitor-card {
   width: 100%;

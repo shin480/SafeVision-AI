@@ -172,6 +172,16 @@ async function loadMonitoringStatus(cctvId) {
   }
 }
 
+function updateVideoFeed(cctvId) {
+  const video = document.querySelector("#cctvVideo");
+
+  if (!video || !cctvId) {
+    return;
+  }
+
+  video.src = `/api/video-feed/${cctvId}`;
+}
+
 function initMonitoring() {
   loadMonitoringSidebar();
 
@@ -183,7 +193,10 @@ function initMonitoring() {
 
   if (searchBtn && cctvSelect) {
     searchBtn.addEventListener("click", () => {
-      loadMonitoringStatus(cctvSelect.value);
+      const cctvId = cctvSelect.value;
+
+      updateVideoFeed(cctvId);
+      loadMonitoringStatus(cctvId);
     });
   }
 }
