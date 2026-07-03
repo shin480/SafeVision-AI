@@ -1,6 +1,8 @@
 from flask import Flask, render_template, jsonify
 import os
 import requests
+from flask import Response
+from flask import request
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FASTAPI_URL = "http://127.0.0.1:8000"
@@ -20,9 +22,40 @@ def dashboard():
 def login():
     return render_template("login.html")
 
+
+#----------------
+# 모니터링
+#----------------
 @app.route("/monitoring")
 def monitoring():
     return render_template("monitoring.html")
+
+
+@app.route("/api/cctv")
+def cctv_list():
+    response = requests.get(f"{FASTAPI_URL}/api/cctv")
+    return jsonify(response.json())
+
+@app.route("/api/video-feed/<cctv_id>")
+def video_feed(cctv_id):
+    response = requests.get(
+        f"{FASTAPI_URL}/api/video-feed/{cctv_id}",
+        stream=True
+    )
+
+    return Response(
+        response.iter_content(chunk_size=1024),
+        content_type=response.headers["Content-Type"]
+    )
+
+@app.route("/api/monitoring/status")
+def monitoring_status():
+    cctv_id = request.args.get("cctvId")
+    response = requests.get(
+        f"{FASTAPI_URL}/api/monitoring/status",
+        params={"cctvId": cctv_id}
+    )
+    return jsonify(response.json())
 
 @app.route("/event-log")
 def event_log():

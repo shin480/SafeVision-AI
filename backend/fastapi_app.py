@@ -6,7 +6,14 @@ from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 
+from ai.detect import generate_frames
+
 app = FastAPI()
+CAMERA_MAP = {
+    "cctv01": 0,
+    "cctv02": 1,
+    "cctv03": 2,
+}
 
 app.add_middleware(SessionMiddleware, secret_key="motmachugetjyo")
 
@@ -31,3 +38,57 @@ def db_test():
     finally:
         if conn:
             conn.close()
+
+
+# -----------------------------
+# monitoring
+# -----------------------------
+@app.get("/api/cctv")
+def cctv_list():
+    return [
+        {"id": "cctv01", "name": "CCTV-01"},
+        {"id": "cctv02", "name": "CCTV-02"},
+        {"id": "cctv03", "name": "CCTV-03"},
+    ]
+
+@app.get("/api/video-feed/{cctv_id}")
+def video_feed(cctv_id: str):
+
+    camera = CAMERA_MAP.get(cctv_id)
+
+    if camera is None:
+        return {"success": False}
+
+    return StreamingResponse(
+        generate_frames(camera),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
+
+@app.get("/api/monitoring/status") # 모니터링 상태 (임시 더미 데이터)
+def monitoring_status(cctvId: str):
+
+    return {
+        "cctvId": cctvId,
+
+        # 현재 상태
+        "riskLevel": "SAFE",        # SAFE / WARNING / DANGER
+        "riskText": "안전",
+        "riskScore": 0,
+
+        # 감지 정보
+        "workerCount": 3,
+        "helmetCount": 3,
+        "noHelmetCount": 0,
+        "vestCount": 3,
+        "noVestCount": 0,
+
+        # 위험구역
+        "dangerZoneIntrusion": 0,
+
+        # PPE
+        "ppeRate": 100,
+
+        # 마지막 감지시간
+        "lastDetected": "2026-07-03 15:25:10"
+    }
