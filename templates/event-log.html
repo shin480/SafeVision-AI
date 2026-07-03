@@ -1,99 +1,112 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>SafeVision-AI Event Log</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>이벤트 로그</title>
 
-  <script src="{{ url_for('static', filename='js/common.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/event-log.js') }}" defer></script>
+  <link rel="stylesheet" href="../static/css/sidebar.css" />
+  <link rel="stylesheet" href="../static/css/event-log.css" />
 </head>
 <body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="logo">SafeVision-AI</div>
+  <div id="sidebar-container"></div>
 
-      <nav class="nav-menu">
-        <a href="./index.html" class="nav-link">대시보드</a>
-        <a href="./monitoring.html" class="nav-link">실시간 모니터링</a>
-        <a href="./event-log.html" class="nav-link active">이벤트 로그</a>
-        <a href="./cctv-manage.html" class="nav-link">CCTV 관리</a>
-      </nav>
-    </aside>
+  <main class="main">
+    <h1>이벤트 로그</h1>
 
-    <main class="main">
-      <header class="header">
-        <h1>이벤트 로그</h1>
-        <div class="header-info">Violation Event History</div>
-      </header>
+    <section class="card">
+      <div class="filter-box">
+        <label>기간 선택</label>
+        <input type="date" id="startDate" />
+        <span>~</span>
+        <input type="date" id="endDate" />
 
-      <section class="content-section">
-        <div class="section-title">로그 필터</div>
+        <label>CCTV 선택</label>
+        <select id="cctvSelect">
+          <option value="all">전체 CCTV</option>
+          <option value="1번 CCTV">1번 CCTV</option>
+          <option value="2번 CCTV">2번 CCTV</option>
+          <option value="3번 CCTV">3번 CCTV</option>
+        </select>
 
-        <div class="form-row">
-          <input class="input" type="date">
-          <select class="input">
-            <option>전체 등급</option>
-            <option>SAFE</option>
-            <option>WARNING</option>
-            <option>DANGER</option>
-            <option>CRITICAL</option>
-          </select>
-          <select class="input">
-            <option>전체 CCTV</option>
-            <option>CAM-01</option>
-            <option>CAM-02</option>
-            <option>CAM-03</option>
-          </select>
-          <button class="button">검색</button>
+        <button id="searchBtn">검색</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>번호</th>
+            <th>시간</th>
+            <th>CCTV</th>
+            <th>위반 유형</th>
+            <th>위험도</th>
+            <th>처리 상태</th>
+            <th>상세보기</th>
+          </tr>
+        </thead>
+        <tbody id="eventTableBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <div class="modal" id="detailModal">
+    <div class="modal-card">
+      <h2>이벤트 상세</h2>
+
+      <div class="capture-box">
+        캡처 이미지
+      </div>
+
+      <div class="detail-content">
+        <div class="detail-left">
+          <h3>이벤트 정보</h3>
+
+          <div class="info-row">
+            <span>발생 시간</span>
+            <strong id="detailTime"></strong>
+          </div>
+
+          <div class="info-row">
+            <span>CCTV</span>
+            <strong id="detailCctv"></strong>
+          </div>
+
+          <div class="info-row">
+            <span>위반 유형</span>
+            <strong id="detailType"></strong>
+          </div>
+
+          <div class="info-row">
+            <span>위험도</span>
+            <strong id="detailRisk"></strong>
+          </div>
         </div>
-      </section>
 
-      <section class="content-section">
-        <div class="section-title">위험 이벤트 목록</div>
+        <div class="detail-right">
+          <div class="form-row">
+            <label>처리 상태</label>
+            <select id="statusSelect">
+              <option>미확인</option>
+              <option>확인</option>
+              <option>조치완료</option>
+            </select>
+          </div>
 
-        <table class="table">
-          <thead>
-            <tr>
-              <th>시간</th>
-              <th>CCTV</th>
-              <th>감지 내용</th>
-              <th>위험 점수</th>
-              <th>등급</th>
-              <th>처리</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>2026-07-02 10:24</td>
-              <td>CAM-01</td>
-              <td>안전모 미착용</td>
-              <td>35</td>
-              <td><span class="status-badge status-warning">WARNING</span></td>
-              <td>로그 저장</td>
-            </tr>
+          <div class="form-row">
+            <label>메모</label>
+            <textarea id="memoInput" placeholder="메모를 입력하세요"></textarea>
+          </div>
+        </div>
+      </div>
 
-            <tr>
-              <td>2026-07-02 10:31</td>
-              <td>CAM-02</td>
-              <td>안전조끼 미착용 + 위험구역 침입</td>
-              <td>75</td>
-              <td><span class="status-badge status-danger">DANGER</span></td>
-              <td>캡처 + 로그</td>
-            </tr>
-
-            <tr>
-              <td>2026-07-02 10:42</td>
-              <td>CAM-03</td>
-              <td>안전모 미착용 + 안전조끼 미착용 + 위험구역 침입</td>
-              <td>100</td>
-              <td><span class="status-badge status-critical">CRITICAL</span></td>
-              <td>캡처 + 강조 표시</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-    </main>
+      <div class="modal-buttons">
+        <button id="saveBtn">저장</button>
+        <button id="closeBtn">목록으로</button>
+      </div>
+    </div>
   </div>
+
+  <script src="../static/js/sidebar.js"></script>
+  <script src="../static/js/event-log.js"></script>
 </body>
 </html>
