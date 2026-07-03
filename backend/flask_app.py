@@ -31,9 +31,9 @@ def event_log():
 def cctv_manage():
     return render_template("cctv-manage.html")
 
-@app.route("/index.html")
-def dashboard():
-    return render_template("index.html")
+@app.route("/sidebar.html")
+def sidebar():
+    return render_template("sidebar.html")
 
 # db 연결 테스트 
 @app.route("/db")
