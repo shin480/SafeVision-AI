@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const sidebarContainer = document.querySelector("#sidebar-container");
 
   if (sidebarContainer) {
-    fetch("./sidebar.html")
+    fetch("/sidebar")
       .then((response) => {
         if (!response.ok) {
           throw new Error("sidebar.html을 불러오지 못했습니다.");
