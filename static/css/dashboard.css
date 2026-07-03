@@ -75,25 +75,9 @@ body {
 
 .safety-icon {
   width: 72px;
-  height: 84px;
-  background: #03a94d;
-  color: #ffffff;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 42px;
-  font-weight: 900;
-
-  clip-path: polygon(
-    50% 0,
-    100% 18%,
-    90% 70%,
-    50% 100%,
-    10% 70%,
-    0 18%
-  );
+  height: 72px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .safety-status strong {

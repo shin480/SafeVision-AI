@@ -64,6 +64,33 @@ function getStatusClass(status) {
   return "status-pending";
 }
 
+function updateOverallStatus(status) {
+  const icon = document.querySelector("#overallStatusIcon");
+
+  if (!icon) return;
+
+  switch (status) {
+    case "SAFE":
+      icon.src = "../static/img/safe.svg";
+      break;
+
+    case "WARNING":
+      icon.src = "../static/img/warning.svg";
+      break;
+
+    case "DANGER":
+      icon.src = "../static/img/danger.svg";
+      break;
+
+    case "CRITICAL":
+      icon.src = "../static/img/critical.svg";
+      break;
+
+    default:
+      icon.src = "../static/img/safe.svg";
+  }
+}
+
 function setText(selector, value) {
   const element = document.querySelector(selector);
 
