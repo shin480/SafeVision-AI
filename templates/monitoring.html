@@ -1,95 +1,77 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>SafeVision-AI Monitoring</title>
+  <meta charset="UTF-8" />
+  <title>실시간 모니터링</title>
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-  <script src="{{ url_for('static', filename='js/common.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='js/monitoring.js') }}" defer></script>
+  <link rel="stylesheet" href="../static/css/sidebar.css" />
+  <link rel="stylesheet" href="../static/css/monitoring.css" />
 </head>
 <body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="logo">SafeVision-AI</div>
+  <div id="sidebar-container"></div>
 
-      <nav class="nav-menu">
-        <a href="./index.html" class="nav-link">대시보드</a>
-        <a href="./monitoring.html" class="nav-link active">실시간 모니터링</a>
-        <a href="./event-log.html" class="nav-link">이벤트 로그</a>
-        <a href="./cctv-manage.html" class="nav-link">CCTV 관리</a>
-      </nav>
-    </aside>
+  <main class="main">
+    <h1>실시간 모니터링</h1>
 
-    <main class="main">
-      <header class="header">
-        <h1>실시간 CCTV 모니터링</h1>
-        <div class="header-info">Live Detection View</div>
-      </header>
+    <section class="monitor-card">
+      <div class="monitor-toolbar">
+        <label for="cctvSelect">CCTV 선택</label>
 
-      <section class="content-section">
-        <div class="section-title">CAM-01 현장 화면</div>
+        <select id="cctvSelect">
+          <option value="1">1번 CCTV</option>
+          <option value="2">2번 CCTV</option>
+          <option value="3">3번 CCTV</option>
+        </select>
 
-        <div class="video-box">
-          <video id="webcam" autoplay playsinline muted></video>
+        <button id="searchBtn">검색</button>
+      </div>
+
+      <div class="video-box" id="videoBox">
+        <!-- 나중에 실시간 영상 또는 스트리밍 이미지 들어갈 자리 -->
+      </div>
+    </section>
+
+    <section class="status-area">
+      <div class="risk-card">
+        <div class="risk-left">
+          <p>현재 위험도</p>
+          <strong id="currentRiskLevel">-</strong>
+          <span id="currentRiskText">-</span>
         </div>
 
-      <button class="button" id="startBtn">감지 시작</button>
-      <button class="button secondary" id="stopBtn">감지 중지</button>
-      </section>
+        <div class="risk-divider"></div>
 
-      <section class="card-grid">
-        <div class="card safe">
-          <div class="card-title">현재 상태</div>
-          <div class="card-value">SAFE</div>
+        <div class="risk-right">
+          <p>위험도 점수</p>
+          <strong id="riskScore">-</strong>
         </div>
+      </div>
 
-        <div class="card warning">
-          <div class="card-title">작업자 수</div>
-          <div class="card-value">4</div>
-        </div>
+      <div class="violation-card">
+        <h2>위반 현황</h2>
 
-        <div class="card danger">
-          <div class="card-title">위반 감지</div>
-          <div class="card-value">1</div>
-        </div>
+        <ul>
+          <li>
+            <span>안전모 미착용</span>
+            <strong id="helmetViolation">-</strong>
+          </li>
 
-        <div class="card critical">
-          <div class="card-title">위험 점수</div>
-          <div class="card-value">35</div>
-        </div>
-      </section>
+          <li>
+            <span>안전조끼 미착용</span>
+            <strong id="vestViolation">-</strong>
+          </li>
 
-      <section class="content-section">
-        <div class="section-title">실시간 감지 결과</div>
+          <li>
+            <span>위험구역 침입</span>
+            <strong id="zoneViolation">-</strong>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </main>
 
-        <table class="table">
-          <thead>
-            <tr>
-              <th>객체</th>
-              <th>신뢰도</th>
-              <th>위치</th>
-              <th>판정</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>person</td>
-              <td>0.92</td>
-              <td>x: 120, y: 85</td>
-              <td><span class="status-badge status-safe">SAFE</span></td>
-            </tr>
-            <tr>
-              <td>no_helmet</td>
-              <td>0.86</td>
-              <td>x: 240, y: 130</td>
-              <td><span class="status-badge status-warning">WARNING</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-    </main>
-  </div>
+  <script src="../static/js/sidebar.js"></script>
+  <script src="../static/js/common.js"></script>
+  <script src="../static/js/monitoring.js"></script>
 </body>
 </html>

@@ -1,47 +1,66 @@
-// 실시간 모니터링 페이지 웹캠 출력용 JS
+const monitoringData = {
+  cctvId: "1",
+  riskLevel: "DANGER",
+  riskText: "위험",
+  riskScore: 65,
+  violations: {
+    helmet: 1,
+    vest: 1,
+    zone: 0,
+  },
+};
 
-let webcamStream = null;
-
-const webcam = document.getElementById("webcam");
-const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
-const videoBox = document.querySelector(".video-box");
-
-// 감지 시작 버튼 클릭 시 웹캠 실행
-startBtn.addEventListener("click", async () => {
-  try {
-    webcamStream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: false
-    });
-
-    webcam.srcObject = webcamStream;
-
-    if (videoBox) {
-      videoBox.style.border = "3px solid #03c75a";
-    }
-
-    console.log("웹캠이 시작되었습니다.");
-  } catch (error) {
-    console.error("웹캠 실행 실패:", error);
-    alert("웹캠을 실행할 수 없습니다. 브라우저 카메라 권한을 확인하세요.");
+function getRiskClass(riskLevel) {
+  switch (riskLevel) {
+    case "SAFE":
+      return "risk-safe";
+    case "WARNING":
+      return "risk-warning";
+    case "DANGER":
+      return "risk-danger";
+    case "CRITICAL":
+      return "risk-critical";
+    default:
+      return "";
   }
-});
+}
 
-// 감지 중지 버튼 클릭 시 웹캠 중지
-stopBtn.addEventListener("click", () => {
-  if (webcamStream) {
-    webcamStream.getTracks().forEach((track) => {
-      track.stop();
-    });
+function renderMonitoring(data) {
+  const riskLevelEl = document.querySelector("#currentRiskLevel");
+  const riskTextEl = document.querySelector("#currentRiskText");
 
-    webcam.srcObject = null;
-    webcamStream = null;
+  riskLevelEl.textContent = data.riskLevel;
+  riskTextEl.textContent = data.riskText;
 
-    if (videoBox) {
-      videoBox.style.border = "none";
-    }
+  const riskClass = getRiskClass(data.riskLevel);
+  riskLevelEl.className = riskClass;
+  riskTextEl.className = riskClass;
 
-    console.log("웹캠이 중지되었습니다.");
-  }
-});
+  document.querySelector("#riskScore").textContent = `${data.riskScore} / 100`;
+
+  document.querySelector("#helmetViolation").textContent = data.violations.helmet;
+  document.querySelector("#vestViolation").textContent = data.violations.vest;
+  document.querySelector("#zoneViolation").textContent = data.violations.zone;
+}
+
+function handleCctvSearch() {
+  const selectedCctv = document.querySelector("#cctvSelect").value;
+
+  console.log(`${selectedCctv}번 CCTV 검색`);
+
+  // 나중에 여기서 API 호출하면 됨.
+  // fetch(`/api/monitoring?cctv=${selectedCctv}`)
+  //   .then((res) => res.json())
+  //   .then((data) => renderMonitoring(data));
+
+  renderMonitoring(monitoringData);
+}
+
+function initMonitoring() {
+  renderMonitoring(monitoringData);
+
+  const searchBtn = document.querySelector("#searchBtn");
+  searchBtn.addEventListener("click", handleCctvSearch);
+}
+
+document.addEventListener("DOMContentLoaded", initMonitoring);
