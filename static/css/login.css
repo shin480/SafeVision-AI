@@ -205,8 +205,8 @@ body {
 
   background-color: rgba(8, 168, 79, 0.38);
 
-  -webkit-mask-image: url("/static/img/login-background.png");
-  mask-image: url("/static/img/login-background.png");
+  -webkit-mask-image: url("/static/img/login-background.svg");
+  mask-image: url("/static/img/login-background.svg");
 
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;

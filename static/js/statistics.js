@@ -92,11 +92,12 @@ function renderHourlyChart(hourlyData) {
           borderColor: "#08a64b",
           backgroundColor: "rgba(8, 166, 75, 0.15)",
 
-          borderWidth: 4,
-          pointRadius: 6,
-          pointHoverRadius: 8,
+          borderWidth: 2.5,
+          pointRadius: 3,
+          pointHoverRadius: 5,
           pointBackgroundColor: "#08a64b",
           pointBorderColor: "#08a64b",
+          pointBorderWidth: 2,
 
           tension: 0.35,
           fill: true
