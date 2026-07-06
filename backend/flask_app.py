@@ -1,8 +1,6 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, Response, request, redirect
 import os
 import requests
-from flask import Response
-from flask import request
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FASTAPI_URL = "http://127.0.0.1:8000"
@@ -13,14 +11,22 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, "static")
 )
 
+# ----------------
+# 로그인 / 대시보드
+# ----------------
 @app.route("/")
-@app.route("/dashboard")
-def dashboard():
-    return render_template("dashboard.html")
+def root():
+    return redirect("/login")
+
 
 @app.route("/login")
 def login():
     return render_template("login.html")
+
+
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
 
 
 #----------------
@@ -57,6 +63,9 @@ def monitoring_status():
     )
     return jsonify(response.json())
 
+# ----------------
+# 이벤트 로그 / 통계
+# ----------------
 @app.route("/event-log")
 def event_log():
     return render_template("event-log.html")
@@ -65,6 +74,9 @@ def event_log():
 def cctv_manage():
     return render_template("statistics.html")
 
+# ----------------
+# 공통 사이드바
+# ----------------
 @app.route("/sidebar")
 def sidebar():
     return render_template("sidebar.html")

@@ -1,4 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const currentPath = location.pathname;
+
+  // 로그인 페이지에서는 로그인 검사 제외
+  if (currentPath !== "/login") {
+    const isLogin = sessionStorage.getItem("isLogin");
+
+    if (isLogin !== "true") {
+      alert("로그인이 필요합니다.");
+      location.href = "/login";
+      return;
+    }
+  }
+
   const sidebarContainer = document.querySelector("#sidebar-container");
 
   if (sidebarContainer) {
@@ -32,5 +45,6 @@ document.addEventListener("click", (event) => {
   }
 
   sessionStorage.removeItem("isLogin");
+  alert("로그아웃되었습니다.");
   location.href = "/login";
 });
