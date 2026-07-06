@@ -95,6 +95,14 @@ def events():
 
     return jsonify(response.json())
 
+# ----------------
+# 대시보드
+# ----------------
+@app.route("/api/dashboard")
+def dashboard_data():
+    response = requests.get(f"{FASTAPI_URL}/api/dashboard")
+    return jsonify(response.json())
+
 # db 연결 테스트 
 @app.route("/db")
 def db():

@@ -6,7 +6,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 
-from backend.event_log.getEventLogs import get_event_logs, get_monitoring_status
+from backend.event_log.getEventLogs import get_event_logs, get_monitoring_status, get_dashboard_data
 
 from ai.detect import generate_frames
 
@@ -75,6 +75,9 @@ def monitoring_status(cctvId: str):
 
     return data
 
+# -----------------------------
+# event log
+# -----------------------------
 @app.get("/api/events")
 def events(
     start_date: str = None,
@@ -88,3 +91,10 @@ def events(
         "success": True,
         "data": data
     }
+
+# -----------------------------
+# dashboard
+# -----------------------------
+@app.get("/api/dashboard")
+def dashboard_data():
+    return get_dashboard_data()

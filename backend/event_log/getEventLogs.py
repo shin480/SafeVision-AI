@@ -1,7 +1,7 @@
 from backend.util.db import get_engine
 from sqlalchemy import text
 
-
+# 이벤트 로그
 def get_event_logs(start_date=None, end_date=None, cctv_id=None):
 
     conn = None
@@ -54,6 +54,7 @@ def get_event_logs(start_date=None, end_date=None, cctv_id=None):
         if conn:
             conn.close()
 
+# 실시간 모니터링
 def get_monitoring_status(cctvId=None):
     conn = None
 
@@ -160,6 +161,139 @@ def get_monitoring_status(cctvId=None):
                 "vest": 0,
                 "zone": 0
             }
+        }
+
+    finally:
+        if conn:
+            conn.close()
+
+# 대시보드
+def get_dashboard_data():
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        # 오늘 전체 경고/위반 수
+        today_warning_sql = text("""
+            SELECT COUNT(*) AS count
+            FROM event_log
+            WHERE DATE(detected_at) = CURDATE()
+        """)
+
+        today_warning = conn.execute(today_warning_sql).mappings().first()
+        today_warning_count = today_warning["count"] if today_warning else 0
+
+        # 오늘 평균 PPE 착용률
+        ppe_sql = text("""
+            SELECT AVG(ppe_wear_rate) AS avg_ppe_rate
+            FROM detection_log
+            WHERE DATE(detected_at) = CURDATE()
+        """)
+
+        ppe_result = conn.execute(ppe_sql).mappings().first()
+        ppe_rate = ppe_result["avg_ppe_rate"] if ppe_result else None
+        ppe_rate = round(float(ppe_rate), 1) if ppe_rate is not None else 0
+
+        # CCTV 연결 상태
+        cctv_sql = text("""
+            SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS connected
+            FROM cctv
+        """)
+
+        cctv_result = conn.execute(cctv_sql).mappings().first()
+        total_cctv = int(cctv_result["total"] or 0)
+        connected_cctv = int(cctv_result["connected"] or 0)
+
+        # 오늘 최고 위험도
+        overall_sql = text("""
+            SELECT risk_level, risk_score
+            FROM event_log
+            WHERE DATE(detected_at) = CURDATE()
+            ORDER BY risk_score DESC
+            LIMIT 1
+        """)
+
+        overall = conn.execute(overall_sql).mappings().first()
+
+        if overall:
+            overall_status = overall["risk_level"]
+        else:
+            overall_status = "SAFE"
+
+        status_text_map = {
+            "SAFE": "안전 상태입니다.",
+            "WARNING": "주의가 필요합니다.",
+            "DANGER": "위험 상황이 감지되었습니다.",
+            "CRITICAL": "심각한 위험 상황입니다."
+        }
+
+        # 최근 이벤트 5개
+        recent_sql = text("""
+            SELECT
+                DATE_FORMAT(e.detected_at, '%H:%i:%s') AS time,
+                c.cctv_name AS cctv,
+                e.violation_type AS violation,
+                e.risk_level AS riskLevel,
+                e.status AS status
+            FROM event_log e
+            JOIN cctv c
+                ON e.cctv_id = c.cctv_id
+            ORDER BY e.detected_at DESC
+            LIMIT 5
+        """)
+
+        recent_events = conn.execute(recent_sql).mappings().all()
+
+        return {
+            "overallStatus": {
+                "status": overall_status,
+                "text": status_text_map.get(overall_status, "-")
+            },
+            "todayWarning": {
+                "count": today_warning_count,
+                "change": None,
+                "changeText": None
+            },
+            "ppeRate": {
+                "rate": ppe_rate,
+                "change": None,
+                "changeText": None
+            },
+            "cctv": {
+                "connected": connected_cctv,
+                "total": total_cctv,
+                "text": "정상 연결" if connected_cctv == total_cctv else "일부 연결 안 됨"
+            },
+            "recentEvents": [dict(row) for row in recent_events]
+        }
+
+    except Exception as e:
+        print("대시보드 조회 오류:", e)
+
+        return {
+            "overallStatus": {
+                "status": "SAFE",
+                "text": "조회 실패"
+            },
+            "todayWarning": {
+                "count": 0,
+                "change": None,
+                "changeText": None
+            },
+            "ppeRate": {
+                "rate": 0,
+                "change": None,
+                "changeText": None
+            },
+            "cctv": {
+                "connected": 0,
+                "total": 0,
+                "text": "조회 실패"
+            },
+            "recentEvents": []
         }
 
     finally:
