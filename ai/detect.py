@@ -2,8 +2,8 @@ from pathlib import Path
 from ultralytics import YOLO
 import cv2
 from collections import Counter
-from risk import calculate_risk
-from capture import get_capture_path_if_needed
+from ai.risk import calculate_risk
+from ai.capture import get_capture_path_if_needed
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
