@@ -60,7 +60,7 @@ def add_risk_result(detection_result, in_danger_zone=False):
     return detection_result
 
 # 위험도 결과에 따라 캡처 이미지를 저장하는 함수
-def save_capture_if_needed(frame, cctv_id, detection_result):
+def save_capture_if_needed(capture_frame, cctv_id, detection_result):
     risk_status = detection_result["risk_status"]
     violation_type = risk_status
 
@@ -71,7 +71,7 @@ def save_capture_if_needed(frame, cctv_id, detection_result):
     )
 
     if capture_path:
-        cv2.imwrite(capture_path, frame)
+        cv2.imwrite(capture_path, capture_frame)
         detection_result["capture_path"] = capture_path
     else:
         detection_result["capture_path"] = None
@@ -135,11 +135,12 @@ def main():
 
             detection_result1 = extract_detection_result(results1, model)
             detection_result1 = add_risk_result(detection_result1)
-            detection_result1 = save_capture_if_needed(frame1, "CCTV01", detection_result1)
+
+            annotated1 = results1[0].plot()
+            detection_result1 = save_capture_if_needed(annotated1, "CCTV01", detection_result1)
 
             print("Camera 1:", detection_result1)
 
-            annotated1 = results1[0].plot()
             cv2.imshow("Camera 1 Detection", annotated1)
 
         # -------------------------------
@@ -150,11 +151,12 @@ def main():
 
             detection_result2 = extract_detection_result(results2, model)
             detection_result2 = add_risk_result(detection_result2)
-            detection_result2 = save_capture_if_needed(frame2, "CCTV02", detection_result2)
+
+            annotated2 = results2[0].plot()
+            detection_result2 = save_capture_if_needed(annotated2, "CCTV02", detection_result2)
 
             print("Camera 2:", detection_result2)
 
-            annotated2 = results2[0].plot()
             cv2.imshow("Camera 2 Detection", annotated2)
 
         # -------------------------------
@@ -165,11 +167,12 @@ def main():
 
             detection_result3 = extract_detection_result(results3, model)
             detection_result3 = add_risk_result(detection_result3)
-            detection_result3 = save_capture_if_needed(frame3, "CCTV03", detection_result3)
+
+            annotated3 = results3[0].plot()
+            detection_result3 = save_capture_if_needed(annotated3, "CCTV03", detection_result3)
 
             print("Camera 3:", detection_result3)
 
-            annotated3 = results3[0].plot()
             cv2.imshow("Camera 3 Detection", annotated3)
 
         # q 키 누르면 종료
@@ -204,11 +207,11 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
 
         detection_result = extract_detection_result(results, model)
         detection_result = add_risk_result(detection_result)
-        detection_result = save_capture_if_needed(frame, cctv_id, detection_result)
-
-        print(cctv_id, detection_result)
 
         annotated = results[0].plot()
+        detection_result = save_capture_if_needed(annotated, cctv_id, detection_result)
+
+        print(cctv_id, detection_result)
 
         ret, buffer = cv2.imencode(".jpg", annotated)
 
