@@ -2,6 +2,7 @@ from pathlib import Path
 from ultralytics import YOLO
 import cv2
 from collections import Counter
+from ai.risk import calculate_risk
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
@@ -40,6 +41,24 @@ def extract_detection_result(results, model):
 
     return detection_result
 
+# 감지 결과를 바탕으로 위험도 점수와 상태를 추가하는 함수
+def add_risk_result(detection_result):
+    no_helmet = detection_result["no_helmet"] > 0
+    no_safety_vest = detection_result["no_safety_vest"] > 0
+
+    # 위험구역 판정은 아직 구현 전이라 임시로 False
+    in_danger_zone = False
+
+    risk_score, risk_status = calculate_risk(
+        no_helmet=no_helmet,
+        no_safety_vest=no_safety_vest,
+        in_danger_zone=in_danger_zone
+    )
+
+    detection_result["risk_score"] = risk_score
+    detection_result["risk_status"] = risk_status
+
+    return detection_result
 
 # 파일을 실행하면 바로 실행할 테스트용 코드
 def main():
@@ -97,6 +116,8 @@ def main():
             results1 = model(frame1, conf=0.5)
 
             detection_result1 = extract_detection_result(results1, model)
+            detection_result1 = add_risk_result(detection_result1)
+
             print("Camera 1:", detection_result1)
 
             annotated1 = results1[0].plot()
@@ -109,6 +130,8 @@ def main():
             results2 = model(frame2, conf=0.5)
 
             detection_result2 = extract_detection_result(results2, model)
+            detection_result2 = add_risk_result(detection_result2)
+
             print("Camera 2:", detection_result2)
 
             annotated2 = results2[0].plot()
@@ -121,6 +144,8 @@ def main():
             results3 = model(frame3, conf=0.5)
 
             detection_result3 = extract_detection_result(results3, model)
+            detection_result3 = add_risk_result(detection_result3)
+
             print("Camera 3:", detection_result3)
 
             annotated3 = results3[0].plot()
