@@ -95,6 +95,13 @@ def monitoring_status():
     return jsonify(response.json())
 
 # ----------------
+# 위험구역 설정
+# ----------------
+@app.route("/danger-zone")
+def danger_zone():
+    return render_template("danger-zone.html")
+
+# ----------------
 # 이벤트 로그 / 통계
 # ----------------
 @app.route("/event-log")
