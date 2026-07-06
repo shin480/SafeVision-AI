@@ -62,8 +62,6 @@ def add_risk_result(detection_result, in_danger_zone=False):
 # 위험도 결과에 따라 캡처 이미지를 저장하는 함수
 def save_capture_if_needed(frame, cctv_id, detection_result):
     risk_status = detection_result["risk_status"]
-
-    # 위반 유형은 일단 위험 상태값으로 구분
     violation_type = risk_status
 
     capture_path = get_capture_path_if_needed(
@@ -188,7 +186,7 @@ def main():
     cv2.destroyAllWindows()
 
 # 서버에 카메라 전송
-def generate_frames(camera_index, conf=0.5):
+def generate_frames(camera_index, cctv_id, conf=0.5):
     model = YOLO(str(MODEL_PATH))
 
     cap = cv2.VideoCapture(camera_index)
@@ -203,6 +201,12 @@ def generate_frames(camera_index, conf=0.5):
             break
 
         results = model(frame, conf=conf)
+
+        detection_result = extract_detection_result(results, model)
+        detection_result = add_risk_result(detection_result)
+        detection_result = save_capture_if_needed(frame, cctv_id, detection_result)
+
+        print(cctv_id, detection_result)
 
         annotated = results[0].plot()
 
@@ -219,7 +223,3 @@ def generate_frames(camera_index, conf=0.5):
         )
 
     cap.release()
-
-
-if __name__ == "__main__":
-    main()
