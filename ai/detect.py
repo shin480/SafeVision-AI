@@ -1,5 +1,9 @@
+from pathlib import Path
 from ultralytics import YOLO
 import cv2
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
 
 
 
@@ -12,7 +16,7 @@ def main():
     # 아직 학습 모델이 없으면 yolo11n.pt 사용
     # 나중에 best.pt 받으면 아래 경로로 변경
     # model = YOLO("ai/models/weights/best.pt")
-    model = YOLO("yolo11n.pt")
+    model = YOLO(str(MODEL_PATH))
     # ===============================
     # 2. 카메라 3대 연결
     # ===============================
@@ -92,7 +96,7 @@ def main():
 
 # 서버에 카메라 전송
 def generate_frames(camera_index, conf=0.5):
-    model = YOLO("yolo11n.pt")
+    model = YOLO(str(MODEL_PATH))
 
     cap = cv2.VideoCapture(camera_index)
 
