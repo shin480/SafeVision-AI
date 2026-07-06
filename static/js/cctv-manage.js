@@ -127,8 +127,8 @@ function openEditModal(id) {
   cctvId.value = item.cctv_id;
   cctvId.disabled = true;
   cctvName.value = item.cctv_name;
-  locationInput.value = item.location;
-  streamUrl.value = item.stream_url;
+  locationInput.value = item.location || "";
+  streamUrl.value = item.stream_url || "";
   isActive.value = String(item.is_active);
 
   modalTitle.textContent = "CCTV 수정";
@@ -211,7 +211,7 @@ function searchCctv() {
   currentList = cctvList.filter(item => {
     return (
       item.cctv_name.toLowerCase().includes(keyword) ||
-      item.location.toLowerCase().includes(keyword) ||
+      (item.location || "").toLowerCase().includes(keyword) ||
       item.cctv_id.toLowerCase().includes(keyword)
     );
   });
