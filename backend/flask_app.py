@@ -30,16 +30,47 @@ def dashboard():
 
 
 #----------------
-# 모니터링
+# 모니터링 / CCTV 관리
 #----------------
 @app.route("/monitoring")
 def monitoring():
     return render_template("monitoring.html")
 
 
-@app.route("/api/cctv")
+@app.route("/cctv-manage")
+def cctv_manage_page():
+    return render_template("cctv-manage.html")
+
+
+@app.route("/api/cctv", methods=["GET"])
 def cctv_list():
     response = requests.get(f"{FASTAPI_URL}/api/cctv")
+    return jsonify(response.json())
+
+
+@app.route("/api/cctv", methods=["POST"])
+def create_cctv():
+    response = requests.post(
+        f"{FASTAPI_URL}/api/cctv",
+        json=request.get_json()
+    )
+    return jsonify(response.json())
+
+
+@app.route("/api/cctv/<cctv_id>", methods=["PUT"])
+def update_cctv(cctv_id):
+    response = requests.put(
+        f"{FASTAPI_URL}/api/cctv/{cctv_id}",
+        json=request.get_json()
+    )
+    return jsonify(response.json())
+
+
+@app.route("/api/cctv/<cctv_id>", methods=["DELETE"])
+def delete_cctv(cctv_id):
+    response = requests.delete(
+        f"{FASTAPI_URL}/api/cctv/{cctv_id}"
+    )
     return jsonify(response.json())
 
 @app.route("/api/video-feed/<cctv_id>")
@@ -71,7 +102,7 @@ def event_log():
     return render_template("event-log.html")
 
 @app.route("/statistics")
-def cctv_manage():
+def statistics():
     return render_template("statistics.html")
 
 # ----------------

@@ -1,31 +1,5 @@
-const cctvList = [
-  {
-    cctv_id: "cctv01",
-    cctv_name: "CCTV-01",
-    location: "1층 작업구역",
-    stream_url: "/api/video-feed/cctv01",
-    is_active: 1,
-    created_at: "2026-07-06 10:00:00"
-  },
-  {
-    cctv_id: "cctv02",
-    cctv_name: "CCTV-02",
-    location: "2층 적재구역",
-    stream_url: "/api/video-feed/cctv02",
-    is_active: 1,
-    created_at: "2026-07-06 10:05:00"
-  },
-  {
-    cctv_id: "cctv03",
-    cctv_name: "CCTV-03",
-    location: "지하 위험구역",
-    stream_url: "/api/video-feed/cctv03",
-    is_active: 0,
-    created_at: "2026-07-06 10:10:00"
-  }
-];
-
-let currentList = [...cctvList];
+let cctvList = [];
+let currentList = [];
 
 const tableBody = document.getElementById("cctvTableBody");
 const totalCount = document.getElementById("totalCount");
@@ -101,6 +75,26 @@ function refreshView(list = currentList) {
   renderTable(list);
 }
 
+async function loadCctvList() {
+  try {
+    const response = await fetch("/api/cctv");
+    const result = await response.json();
+
+    if (!result.success) {
+      alert(result.message || "CCTV 목록 조회 실패");
+      return;
+    }
+
+    cctvList = result.data;
+    currentList = [...cctvList];
+
+    refreshView(currentList);
+  } catch (error) {
+    console.error("CCTV 목록 조회 오류:", error);
+    alert("CCTV 목록 조회 중 오류가 발생했습니다.");
+  }
+}
+
 function openModal() {
   modal.classList.add("active");
 }
@@ -141,21 +135,32 @@ function openEditModal(id) {
   openModal();
 }
 
-function deleteCctv(id) {
-  const confirmed = confirm("해당 CCTV를 삭제하시겠습니까?");
+async function deleteCctv(id) {
+  const confirmed = confirm("해당 CCTV를 미사용 처리하시겠습니까?");
 
   if (!confirmed) return;
 
-  const index = cctvList.findIndex(item => item.cctv_id === id);
+  try {
+    const response = await fetch(`/api/cctv/${id}`, {
+      method: "DELETE"
+    });
 
-  if (index >= 0) {
-    cctvList.splice(index, 1);
-    currentList = [...cctvList];
-    refreshView();
+    const result = await response.json();
+
+    if (!result.success) {
+      alert(result.message || "삭제 처리 실패");
+      return;
+    }
+
+    alert(result.message);
+    loadCctvList();
+  } catch (error) {
+    console.error("CCTV 삭제 처리 오류:", error);
+    alert("CCTV 삭제 처리 중 오류가 발생했습니다.");
   }
 }
 
-function handleSubmit(event) {
+async function handleSubmit(event) {
   event.preventDefault();
 
   const data = {
@@ -163,8 +168,7 @@ function handleSubmit(event) {
     cctv_name: cctvName.value.trim(),
     location: locationInput.value.trim(),
     stream_url: streamUrl.value.trim(),
-    is_active: Number(isActive.value),
-    created_at: new Date().toISOString().slice(0, 19).replace("T", " ")
+    is_active: Number(isActive.value)
   };
 
   if (!data.cctv_id || !data.cctv_name) {
@@ -172,32 +176,33 @@ function handleSubmit(event) {
     return;
   }
 
-  if (formMode.value === "add") {
-    const exists = cctvList.some(item => item.cctv_id === data.cctv_id);
+  const mode = formMode.value;
+  const url = mode === "add" ? "/api/cctv" : `/api/cctv/${data.cctv_id}`;
+  const method = mode === "add" ? "POST" : "PUT";
 
-    if (exists) {
-      alert("이미 등록된 CCTV ID입니다.");
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      alert(result.message || "저장 실패");
       return;
     }
 
-    cctvList.push(data);
-  } else {
-    const index = cctvList.findIndex(item => item.cctv_id === data.cctv_id);
-
-    if (index >= 0) {
-      cctvList[index] = {
-        ...cctvList[index],
-        cctv_name: data.cctv_name,
-        location: data.location,
-        stream_url: data.stream_url,
-        is_active: data.is_active
-      };
-    }
+    alert(result.message);
+    closeModal();
+    loadCctvList();
+  } catch (error) {
+    console.error("CCTV 저장 오류:", error);
+    alert("CCTV 저장 중 오류가 발생했습니다.");
   }
-
-  currentList = [...cctvList];
-  refreshView();
-  closeModal();
 }
 
 function searchCctv() {
@@ -226,4 +231,4 @@ searchInput.addEventListener("keyup", event => {
   }
 });
 
-refreshView();
+loadCctvList();

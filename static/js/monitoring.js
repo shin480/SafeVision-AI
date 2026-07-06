@@ -144,8 +144,13 @@ async function loadCctvList() {
       throw new Error("CCTV 목록 조회 실패");
     }
 
-    const cctvList = await response.json();
-    renderCctvOptions(cctvList);
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || "CCTV 목록 조회 실패");
+    }
+
+    renderCctvOptions(result.data);
   } catch (error) {
     console.error(error);
   }

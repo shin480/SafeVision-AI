@@ -1,7 +1,7 @@
 from backend.util.db import get_engine
 from sqlalchemy import text
 
-from fastapi import FastAPI, Query, UploadFile, File
+from fastapi import FastAPI, Query, UploadFile, File, Body
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -42,17 +42,212 @@ def db_test():
         if conn:
             conn.close()
 
-
 # -----------------------------
-# monitoring
+# CCTV 관리
 # -----------------------------
 @app.get("/api/cctv")
 def cctv_list():
-    return [
-        {"id": "cctv01", "name": "CCTV-01"},
-        {"id": "cctv02", "name": "CCTV-02"},
-        {"id": "cctv03", "name": "CCTV-03"},
-    ]
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        sql = text("""
+            SELECT
+                cctv_id,
+                cctv_name,
+                location,
+                stream_url,
+                is_active,
+                DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS created_at
+            FROM cctv
+            ORDER BY created_at DESC
+        """)
+
+        result = conn.execute(sql).mappings().all()
+
+        data = []
+        for row in result:
+            item = dict(row)
+
+            # 기존 monitoring.js 호환용
+            item["id"] = item["cctv_id"]
+            item["name"] = item["cctv_name"]
+
+            data.append(item)
+
+        return {
+            "success": True,
+            "data": data
+        }
+
+    except Exception as e:
+        print("CCTV 목록 조회 오류:", e)
+        return {
+            "success": False,
+            "message": "CCTV 목록 조회 실패",
+            "data": []
+        }
+
+    finally:
+        if conn:
+            conn.close()
+
+# CCTV 등록 API
+@app.post("/api/cctv")
+def create_cctv(data: dict = Body(...)):
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        sql = text("""
+            INSERT INTO cctv (
+                cctv_id,
+                cctv_name,
+                location,
+                stream_url,
+                is_active
+            )
+            VALUES (
+                :cctv_id,
+                :cctv_name,
+                :location,
+                :stream_url,
+                :is_active
+            )
+        """)
+
+        conn.execute(sql, {
+            "cctv_id": data.get("cctv_id"),
+            "cctv_name": data.get("cctv_name"),
+            "location": data.get("location"),
+            "stream_url": data.get("stream_url"),
+            "is_active": data.get("is_active", 1)
+        })
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": "CCTV가 등록되었습니다."
+        }
+
+    except Exception as e:
+        print("CCTV 등록 오류:", e)
+
+        if conn:
+            conn.rollback()
+
+        return {
+            "success": False,
+            "message": "CCTV 등록 실패"
+        }
+
+    finally:
+        if conn:
+            conn.close()
+
+# CCTV 수정 API
+@app.put("/api/cctv/{cctv_id}")
+def update_cctv(cctv_id: str, data: dict = Body(...)):
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        sql = text("""
+            UPDATE cctv
+            SET
+                cctv_name = :cctv_name,
+                location = :location,
+                stream_url = :stream_url,
+                is_active = :is_active
+            WHERE cctv_id = :cctv_id
+        """)
+
+        result = conn.execute(sql, {
+            "cctv_id": cctv_id,
+            "cctv_name": data.get("cctv_name"),
+            "location": data.get("location"),
+            "stream_url": data.get("stream_url"),
+            "is_active": data.get("is_active", 1)
+        })
+
+        conn.commit()
+
+        if result.rowcount == 0:
+            return {
+                "success": False,
+                "message": "수정할 CCTV가 없습니다."
+            }
+
+        return {
+            "success": True,
+            "message": "CCTV 정보가 수정되었습니다."
+        }
+
+    except Exception as e:
+        print("CCTV 수정 오류:", e)
+
+        if conn:
+            conn.rollback()
+
+        return {
+            "success": False,
+            "message": "CCTV 수정 실패"
+        }
+
+    finally:
+        if conn:
+            conn.close()
+
+# CCTV 삭제 API - 실제 삭제가 아니라 미사용 처리
+@app.delete("/api/cctv/{cctv_id}")
+def delete_cctv(cctv_id: str):
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        # 실제 삭제 대신 미사용 처리
+        sql = text("""
+            UPDATE cctv
+            SET is_active = 0
+            WHERE cctv_id = :cctv_id
+        """)
+
+        result = conn.execute(sql, {
+            "cctv_id": cctv_id
+        })
+
+        conn.commit()
+
+        if result.rowcount == 0:
+            return {
+                "success": False,
+                "message": "처리할 CCTV가 없습니다."
+            }
+
+        return {
+            "success": True,
+            "message": "CCTV가 미사용 처리되었습니다."
+        }
+
+    except Exception as e:
+        print("CCTV 삭제/미사용 처리 오류:", e)
+
+        if conn:
+            conn.rollback()
+
+        return {
+            "success": False,
+            "message": "CCTV 삭제 처리 실패"
+        }
+
+    finally:
+        if conn:
+            conn.close()
 
 @app.get("/api/video-feed/{cctv_id}")
 def video_feed(cctv_id: str):
