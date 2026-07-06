@@ -1,5 +1,3 @@
-# capture.py
-
 import os
 from datetime import datetime
 

@@ -2,7 +2,7 @@ from pathlib import Path
 from ultralytics import YOLO
 import cv2
 from collections import Counter
-from ai.risk import calculate_risk
+from risk import calculate_risk
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
