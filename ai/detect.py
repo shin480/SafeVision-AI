@@ -3,6 +3,7 @@ from ultralytics import YOLO
 import cv2
 from collections import Counter
 from risk import calculate_risk
+from capture import get_capture_path_if_needed
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
@@ -41,13 +42,10 @@ def extract_detection_result(results, model):
 
     return detection_result
 
-# 감지 결과를 바탕으로 위험도 점수와 상태를 추가하는 함수
-def add_risk_result(detection_result):
+# 감지 결과를 바탕으로 위험도 점수와 상태를 추가하는 함수 - 나중에 위험구역 기능을 붙이면 됨
+def add_risk_result(detection_result, in_danger_zone=False):
     no_helmet = detection_result["no_helmet"] > 0
     no_safety_vest = detection_result["no_safety_vest"] > 0
-
-    # 위험구역 판정은 아직 구현 전이라 임시로 False
-    in_danger_zone = False
 
     risk_score, risk_status = calculate_risk(
         no_helmet=no_helmet,
@@ -55,8 +53,30 @@ def add_risk_result(detection_result):
         in_danger_zone=in_danger_zone
     )
 
+    detection_result["in_danger_zone"] = in_danger_zone
     detection_result["risk_score"] = risk_score
     detection_result["risk_status"] = risk_status
+
+    return detection_result
+
+# 위험도 결과에 따라 캡처 이미지를 저장하는 함수
+def save_capture_if_needed(frame, cctv_id, detection_result):
+    risk_status = detection_result["risk_status"]
+
+    # 위반 유형은 일단 위험 상태값으로 구분
+    violation_type = risk_status
+
+    capture_path = get_capture_path_if_needed(
+        cctv_id=cctv_id,
+        violation_type=violation_type,
+        status=risk_status
+    )
+
+    if capture_path:
+        cv2.imwrite(capture_path, frame)
+        detection_result["capture_path"] = capture_path
+    else:
+        detection_result["capture_path"] = None
 
     return detection_result
 
@@ -117,6 +137,7 @@ def main():
 
             detection_result1 = extract_detection_result(results1, model)
             detection_result1 = add_risk_result(detection_result1)
+            detection_result1 = save_capture_if_needed(frame1, "CCTV01", detection_result1)
 
             print("Camera 1:", detection_result1)
 
@@ -131,6 +152,7 @@ def main():
 
             detection_result2 = extract_detection_result(results2, model)
             detection_result2 = add_risk_result(detection_result2)
+            detection_result2 = save_capture_if_needed(frame2, "CCTV02", detection_result2)
 
             print("Camera 2:", detection_result2)
 
@@ -145,6 +167,7 @@ def main():
 
             detection_result3 = extract_detection_result(results3, model)
             detection_result3 = add_risk_result(detection_result3)
+            detection_result3 = save_capture_if_needed(frame3, "CCTV03", detection_result3)
 
             print("Camera 3:", detection_result3)
 
