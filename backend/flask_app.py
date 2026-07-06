@@ -13,14 +13,22 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, "static")
 )
 
+# ----------------
+# 로그인 / 대시보드
+# ----------------
 @app.route("/")
-@app.route("/dashboard")
-def dashboard():
-    return render_template("dashboard.html")
+def root():
+    return redirect("/login")
+
 
 @app.route("/login")
 def login():
     return render_template("login.html")
+
+
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
 
 
 #----------------
@@ -57,6 +65,9 @@ def monitoring_status():
     )
     return jsonify(response.json())
 
+# ----------------
+# 이벤트 로그 / 통계
+# ----------------
 @app.route("/event-log")
 def event_log():
     return render_template("event-log.html")
@@ -65,11 +76,16 @@ def event_log():
 def cctv_manage():
     return render_template("statistics.html")
 
+# ----------------
+# 공통 사이드바
+# ----------------
 @app.route("/sidebar")
 def sidebar():
     return render_template("sidebar.html")
 
-# db 연결 테스트 
+# ----------------
+# DB 연결 테스트
+# ----------------
 @app.route("/db")
 def db():
     response = requests.get(f"{FASTAPI_URL}/db")
