@@ -5,6 +5,8 @@ const saveBtn = document.getElementById("saveBtn");
 
 const cctvSelect = document.getElementById("cctvSelect");
 const zoneNameInput = document.getElementById("zoneName");
+const zoneVideo = document.getElementById("zoneVideo");
+const zonePlaceholder = document.getElementById("zonePlaceholder");
 const x1Input = document.getElementById("x1");
 const y1Input = document.getElementById("y1");
 const x2Input = document.getElementById("x2");
@@ -219,7 +221,7 @@ async function loadCctvOptions() {
       return;
     }
 
-    cctvSelect.innerHTML = "";
+    cctvSelect.innerHTML = `<option value="">CCTV 선택</option>`;
 
     result.data.forEach((cctv, index) => {
       const option = document.createElement("option");
@@ -277,6 +279,17 @@ resetBtn.addEventListener("click", resetZone);
 saveBtn.addEventListener("click", saveDangerZone);
 
 searchBtn.addEventListener("click", () => {
+  const selectedCctvId = cctvSelect.value;
+
+  if (!selectedCctvId) {
+    alert("CCTV를 선택하세요.");
+    return;
+  }
+
+  zoneVideo.src = `/api/video-feed/${selectedCctvId}`;
+  zoneVideo.classList.remove("hidden");
+  zonePlaceholder.classList.add("hidden");
+
   resetZone();
 });
 
