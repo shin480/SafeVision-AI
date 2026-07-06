@@ -14,7 +14,7 @@ def calculate_risk(
     if in_danger_zone:
         score += 30
 
-    if score >= 90:
+    if score >= 80:
         status = "CRITICAL"
     elif score >= 60:
         status = "DANGER"

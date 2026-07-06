@@ -6,9 +6,12 @@ from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 
+from backend.event_log.getEventLogs import get_event_logs
+
 from ai.detect import generate_frames
 
 app = FastAPI()
+
 CAMERA_MAP = {
     "cctv01": 0,
     "cctv02": 1,
@@ -91,4 +94,18 @@ def monitoring_status(cctvId: str):
 
         # 마지막 감지시간
         "lastDetected": "2026-07-03 15:25:10"
+    }
+
+@app.get("/api/events")
+def events(
+    start_date: str = None,
+    end_date: str = None,
+    cctv_id: str = None
+):
+
+    data = get_event_logs(start_date, end_date, cctv_id)
+
+    return {
+        "success": True,
+        "data": data
     }
