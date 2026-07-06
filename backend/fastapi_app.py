@@ -6,7 +6,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 
-from backend.event_log.getEventLogs import get_event_logs
+from backend.event_log.getEventLogs import get_event_logs, get_monitoring_status
 
 from ai.detect import generate_frames
 
@@ -71,30 +71,9 @@ def video_feed(cctv_id: str):
 @app.get("/api/monitoring/status") # 모니터링 상태 (임시 더미 데이터)
 def monitoring_status(cctvId: str):
 
-    return {
-        "cctvId": cctvId,
+    data = get_monitoring_status(cctvId)
 
-        # 현재 상태
-        "riskLevel": "SAFE",        # SAFE / WARNING / DANGER
-        "riskText": "안전",
-        "riskScore": 0,
-
-        # 감지 정보
-        "workerCount": 3,
-        "helmetCount": 3,
-        "noHelmetCount": 0,
-        "vestCount": 3,
-        "noVestCount": 0,
-
-        # 위험구역
-        "dangerZoneIntrusion": 0,
-
-        # PPE
-        "ppeRate": 100,
-
-        # 마지막 감지시간
-        "lastDetected": "2026-07-03 15:25:10"
-    }
+    return data
 
 @app.get("/api/events")
 def events(
