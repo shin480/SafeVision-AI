@@ -214,10 +214,6 @@ def get_dashboard_data():
 
             cap.release()
 
-        cctv_result = conn.execute(cctv_sql).mappings().first()
-        total_cctv = int(cctv_result["total"] or 0)
-        connected_cctv = int(cctv_result["connected"] or 0)
-
         # 오늘 최고 위험도
         overall_sql = text("""
             SELECT risk_level, risk_score
