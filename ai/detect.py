@@ -8,6 +8,9 @@ from ai.capture import get_capture_path_if_needed
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
 
+# YOLO 모델 한 번만 로드
+model = YOLO(str(MODEL_PATH))
+
 # YOLO 감지 결과를 JSON 형태로 정리하는 함수
 def extract_detection_result(results, model):
     boxes = results[0].boxes
@@ -59,10 +62,37 @@ def add_risk_result(detection_result, in_danger_zone=False):
 
     return detection_result
 
-# 위험도 결과에 따라 캡처 이미지를 저장하는 함수
+def make_violation_type(detection_result):
+    """
+    감지 결과를 바탕으로 위반 유형을 만든다.
+    쿨다운 중복 캡처 기준으로 사용된다.
+    """
+
+    violation_types = []
+
+    if detection_result.get("no_helmet", 0) > 0:
+        violation_types.append("NO_HELMET")
+
+    if detection_result.get("no_safety_vest", 0) > 0:
+        violation_types.append("NO_SAFETY_VEST")
+
+    if detection_result.get("in_danger_zone"):
+        violation_types.append("DANGER_ZONE")
+
+    if not violation_types:
+        return "NONE"
+
+    return "_".join(violation_types)
+
+
 def save_capture_if_needed(capture_frame, cctv_id, detection_result):
+    """
+    위험도 결과에 따라 캡처 이미지를 저장한다.
+    실제 캡처는 위험구역 설정이 아니라 실시간 감지 결과 기준으로 수행된다.
+    """
+
     risk_status = detection_result["risk_status"]
-    violation_type = risk_status
+    violation_type = make_violation_type(detection_result)
 
     capture_path = get_capture_path_if_needed(
         cctv_id=cctv_id,
@@ -72,23 +102,24 @@ def save_capture_if_needed(capture_frame, cctv_id, detection_result):
 
     if capture_path:
         cv2.imwrite(capture_path, capture_frame)
+
+        # 백엔드 저장 경로
         detection_result["capture_path"] = capture_path
+
+        # 프론트에서 이미지 src로 쓰기 좋은 경로
+        detection_result["capture_url"] = "/" + capture_path.replace("\\", "/")
     else:
         detection_result["capture_path"] = None
+        detection_result["capture_url"] = None
+
+    detection_result["violation_type"] = violation_type
 
     return detection_result
 
 # 파일을 실행하면 바로 실행할 테스트용 코드
 def main():
     # ===============================
-    # 1. YOLO 모델 불러오기
-    # ===============================
-    # 아직 학습 모델이 없으면 yolo11n.pt 사용
-    # 나중에 best.pt 받으면 아래 경로로 변경
-    # model = YOLO("ai/models/weights/best.pt")
-    model = YOLO(str(MODEL_PATH))
-    # ===============================
-    # 2. 카메라 3대 연결
+    # 1. 카메라 3대 연결
     # ===============================
     # 보통 0, 1, 2 순서로 잡힘
     # 안 잡히면 2를 3으로 바꿔보면 됨
@@ -98,7 +129,7 @@ def main():
 
 
     # ===============================
-    # 3. 카메라 연결 확인
+    # 2. 카메라 연결 확인
     # ===============================
     if not cap1.isOpened():
         print("Camera 1을 열 수 없습니다. index 0 확인 필요")
@@ -119,7 +150,7 @@ def main():
 
 
     # ===============================
-    # 4. 프레임 단위 YOLO 감지
+    # 3. 프레임 단위 YOLO 감지
     # ===============================
     while True:
         # 각 카메라에서 프레임 읽기
@@ -181,7 +212,7 @@ def main():
 
 
     # ===============================
-    # 5. 종료 처리
+    # 4. 종료 처리
     # ===============================
     cap1.release()
     cap2.release()
@@ -190,7 +221,6 @@ def main():
 
 # 서버에 카메라 전송
 def generate_frames(camera_index, cctv_id, conf=0.5):
-    model = YOLO(str(MODEL_PATH))
 
     cap = cv2.VideoCapture(camera_index)
 
