@@ -1,8 +1,9 @@
 .main {
-  padding: 32px;
-  margin-left: 240px;
+  flex: 1;
+  min-width: 0;
+  padding: 34px 48px 36px;
   min-height: 100vh;
-  background: #f6f8f7;
+  background: #f4f7fa;
 }
 
 .page-header {
@@ -14,8 +15,10 @@
 
 .page-header h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 36px;
+  font-weight: 800;
   color: #1f2937;
+  letter-spacing: -1px;
 }
 
 .page-header p {
@@ -26,12 +29,12 @@
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  margin-bottom: 24px;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
 .summary-card {
-  padding: 22px;
+  padding: 16px 20px;
   background: #ffffff;
   border-radius: 16px;
   border: 1px solid #e5e7eb;
@@ -46,14 +49,14 @@
 }
 
 .summary-card strong {
-  font-size: 30px;
+  font-size: 26px;
   color: #16a34a;
 }
 
 .content-card {
   background: #ffffff;
   border-radius: 18px;
-  padding: 24px;
+  padding: 22px 24px;
   border: 1px solid #e5e7eb;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
 }
