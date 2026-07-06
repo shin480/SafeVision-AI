@@ -1,5 +1,12 @@
 from backend.util.db import get_engine
 from sqlalchemy import text
+import cv2
+
+CAMERA_MAP = {
+            "cctv01": 0,
+            "cctv02": 1,
+            "cctv03": 2,
+        }
 
 # 이벤트 로그
 def get_event_logs(start_date=None, end_date=None, cctv_id=None):
@@ -196,12 +203,16 @@ def get_dashboard_data():
         ppe_rate = round(float(ppe_rate), 1) if ppe_rate is not None else 0
 
         # CCTV 연결 상태
-        cctv_sql = text("""
-            SELECT
-                COUNT(*) AS total,
-                SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS connected
-            FROM cctv
-        """)
+        total_cctv = len(CAMERA_MAP)
+        connected_cctv = 0
+
+        for camera_index in CAMERA_MAP.values():
+            cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
+
+            if cap.isOpened():
+                connected_cctv += 1
+
+            cap.release()
 
         cctv_result = conn.execute(cctv_sql).mappings().first()
         total_cctv = int(cctv_result["total"] or 0)
