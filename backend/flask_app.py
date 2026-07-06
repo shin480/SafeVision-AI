@@ -1,8 +1,6 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, Response, request, redirect
 import os
 import requests
-from flask import Response
-from flask import request
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FASTAPI_URL = "http://127.0.0.1:8000"
