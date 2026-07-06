@@ -63,7 +63,7 @@ def video_feed(cctv_id: str):
         return {"success": False}
 
     return StreamingResponse(
-        generate_frames(camera),
+        generate_frames(camera, cctv_id),
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
 
