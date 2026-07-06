@@ -18,8 +18,20 @@ async function loadEvents() {
   // 나중에 Flask랑 연결하면 여기를 수정하면 됨
   // 예: const response = await fetch("/api/events");
   // events = await response.json();
+  const startDate = document.getElementById("startDate").value;
+  const endDate = document.getElementById("endDate").value;
+  const cctvId = document.getElementById("cctvSelect").value;
 
-  events = await getEventData();
+  const params = new URLSearchParams();
+
+  if (startDate) params.append("start_date", startDate);
+  if (endDate) params.append("end_date", endDate);
+  if (cctvId && cctvId !== "all") params.append("cctv_id", cctvId);
+
+  const response = await fetch(`/api/events?${params.toString()}`);
+  const result = await response.json();
+
+  events = result.data;
   renderTable(events);
 }
 
@@ -129,25 +141,7 @@ function closeDetail() {
 document.getElementById("closeBtn").addEventListener("click", closeDetail);
 
 document.getElementById("searchBtn").addEventListener("click", () => {
-  const startDate = document.getElementById("startDate").value;
-  const endDate = document.getElementById("endDate").value;
-  const cctv = document.getElementById("cctvSelect").value;
-
-  let filtered = events;
-
-  if (startDate) {
-    filtered = filtered.filter((event) => event.time.slice(0, 10) >= startDate);
-  }
-
-  if (endDate) {
-    filtered = filtered.filter((event) => event.time.slice(0, 10) <= endDate);
-  }
-
-  if (cctv !== "all") {
-    filtered = filtered.filter((event) => event.cctv === cctv);
-  }
-
-  renderTable(filtered);
+  loadEvents();
 });
 
 loadEvents();

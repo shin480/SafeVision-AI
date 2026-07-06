@@ -69,6 +69,20 @@ def cctv_manage():
 def sidebar():
     return render_template("sidebar.html")
 
+@app.route("/api/events")
+def events():
+
+    response = requests.get(
+        f"{FASTAPI_URL}/api/events",
+        params={
+            "start_date": request.args.get("start_date"),
+            "end_date": request.args.get("end_date"),
+            "cctv_id": request.args.get("cctv_id")
+        }
+    )
+
+    return jsonify(response.json())
+
 # db 연결 테스트 
 @app.route("/db")
 def db():
