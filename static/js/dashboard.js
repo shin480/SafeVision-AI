@@ -66,28 +66,34 @@ function getStatusClass(status) {
 
 function updateOverallStatus(status) {
   const icon = document.querySelector("#overallStatusIcon");
+  const text = document.querySelector("#overallStatus");
 
-  if (!icon) return;
+  if (!icon || !text) return;
 
   switch (status) {
     case "SAFE":
       icon.src = "../static/img/safe.svg";
+      text.style.color = "#03a94d";
       break;
 
     case "WARNING":
       icon.src = "../static/img/warning.svg";
+      text.style.color = "#f59e0b";
       break;
 
     case "DANGER":
       icon.src = "../static/img/danger.svg";
+      text.style.color = "#ff3333";
       break;
 
     case "CRITICAL":
       icon.src = "../static/img/critical.svg";
+      text.style.color = "#8b1515";
       break;
 
     default:
       icon.src = "../static/img/safe.svg";
+      text.style.color = "#03a94d";
   }
 }
 
@@ -126,8 +132,12 @@ function resetDashboard() {
 }
 
 function renderSummary(data) {
+  const status = data.overallStatus?.status;
+
   setText("#overallStatus", data.overallStatus?.status);
   setText("#overallStatusText", data.overallStatus?.text);
+
+  updateOverallStatus(status);
 
   setText("#todayWarningCount", data.todayWarning?.count);
 

@@ -48,7 +48,7 @@ body {
   margin-bottom: 14px;
   font-size: 48px;
   font-weight: 800;
-  color: #03a94d;
+  color: #111827;
   letter-spacing: -1px;
 }
 
@@ -61,7 +61,7 @@ body {
 
 .summary-card > span strong,
 .summary-card > span.plus {
-  color: #03a94d;
+  color: #111827;
   font-size: 20px;
   font-weight: 800;
 }
