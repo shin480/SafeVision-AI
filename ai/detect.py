@@ -10,6 +10,7 @@ MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
 
 # YOLO 모델 한 번만 로드
 model = YOLO(str(MODEL_PATH))
+latest_detection_status = {}
 
 # YOLO 감지 결과를 JSON 형태로 정리하는 함수
 def extract_detection_result(results, model):
@@ -241,6 +242,22 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
         annotated = results[0].plot()
         detection_result = save_capture_if_needed(annotated, cctv_id, detection_result)
 
+        latest_detection_status[cctv_id] = {
+            "riskLevel": detection_result.get("risk_status", "-"),
+            "riskText": get_risk_text(detection_result.get("risk_status", "-")),
+            "riskScore": detection_result.get("risk_score", 0),
+            "violations": {
+                "helmet": detection_result.get("no_helmet", 0),
+                "vest": detection_result.get("no_safety_vest", 0),
+                "zone": 1 if detection_result.get("in_danger_zone") else 0
+            },
+            "person": detection_result.get("person", 0),
+            "helmet": detection_result.get("helmet", 0),
+            "safetyVest": detection_result.get("safety_vest", 0),
+            "violationType": detection_result.get("violation_type", "NONE"),
+            "captureUrl": detection_result.get("capture_url")
+        }
+
         print(cctv_id, detection_result)
 
         ret, buffer = cv2.imencode(".jpg", annotated)
@@ -256,3 +273,32 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
         )
 
     cap.release()
+
+def get_risk_text(risk_status):
+    if risk_status == "SAFE":
+        return "정상"
+    if risk_status == "WARNING":
+        return "주의"
+    if risk_status == "DANGER":
+        return "위험"
+    if risk_status == "CRITICAL":
+        return "매우 위험"
+    return "-"
+
+
+def get_latest_detection_status(cctv_id):
+    return latest_detection_status.get(cctv_id, {
+        "riskLevel": "-",
+        "riskText": "-",
+        "riskScore": 0,
+        "violations": {
+            "helmet": 0,
+            "vest": 0,
+            "zone": 0
+        },
+        "person": 0,
+        "helmet": 0,
+        "safetyVest": 0,
+        "violationType": "NONE",
+        "captureUrl": None
+    })

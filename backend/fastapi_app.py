@@ -1,19 +1,17 @@
 from backend.util.db import get_engine
 from sqlalchemy import text
 
-from fastapi import FastAPI, Query, UploadFile, File, Body
-from starlette.staticfiles import StaticFiles
+from fastapi import FastAPI, Body
 from starlette.middleware.sessions import SessionMiddleware
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse
 
 from backend.event_log.getEventLogs import (
     get_event_logs,
-    get_monitoring_status,
     get_dashboard_data,
     get_statistics_data
 )
 
-from ai.detect import generate_frames
+from ai.detect import generate_frames, get_latest_detection_status
 
 app = FastAPI()
 
@@ -270,10 +268,7 @@ def video_feed(cctv_id: str):
 
 @app.get("/api/monitoring/status")
 def monitoring_status(cctvId: str):
-
-    data = get_monitoring_status(cctvId)
-
-    return data
+    return get_latest_detection_status(cctvId)
 
 # -----------------------------
 # event log
