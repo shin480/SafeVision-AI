@@ -211,21 +211,23 @@ function updateVideoFeed(cctvId) {
    전체보기 처리
 ========================= */
 
-function openFullscreen() {
+function openFullscreen(src = null) {
   const video = document.querySelector("#cctvVideo");
   const fullscreenModal = document.querySelector("#fullscreenModal");
   const fullscreenVideo = document.querySelector("#fullscreenVideo");
 
-  if (!video || !fullscreenModal || !fullscreenVideo) {
+  if (!fullscreenModal || !fullscreenVideo) {
     return;
   }
 
-  if (!video.src || video.classList.contains("hidden")) {
+  const targetSrc = src || video?.src;
+
+  if (!targetSrc) {
     alert("먼저 CCTV를 선택해주세요.");
     return;
   }
 
-  fullscreenVideo.src = video.src;
+  fullscreenVideo.src = targetSrc;
   fullscreenModal.classList.add("active");
 }
 
@@ -247,7 +249,9 @@ function initFullscreen() {
   const closeFullscreenBtn = document.querySelector("#closeFullscreenBtn");
 
   if (fullscreenBtn) {
-    fullscreenBtn.addEventListener("click", openFullscreen);
+    fullscreenBtn.addEventListener("click", () => {
+      openFullscreen();
+    });
   }
 
   if (closeFullscreenBtn) {
@@ -270,23 +274,34 @@ function initFullscreen() {
 }
 
 function showAllCctv() {
-  const grid = document.querySelector("#videoGrid");
+    const grid = document.querySelector("#videoGrid");
 
-  grid.innerHTML = "";
+    grid.innerHTML = "";
 
-  const activeCctvList = cctvList.slice(0, 6);
-  const count = activeCctvList.length;
+    const activeCctvList = cctvList.slice(0, 6);
+    const count = activeCctvList.length;
 
-  grid.className = `video-grid grid-${count}`;
+    grid.className = `video-grid grid-${count}`;
 
-  activeCctvList.forEach(cctv => {
-    grid.innerHTML += `
-      <div class="video-item">
-        <div class="video-title">${cctv.name}</div>
-        <img src="/api/video-feed/${cctv.id}">
-      </div>
-    `;
-  });
+    activeCctvList.forEach(cctv => {
+
+        grid.innerHTML += `
+        <div class="video-item">
+
+            <div class="video-title">${cctv.name}</div>
+
+            <img src="/api/video-feed/${cctv.id}">
+
+            <button
+                class="grid-fullscreen-btn"
+                onclick="openFullscreen('/api/video-feed/${cctv.id}')">
+                <img src="../static/img/full-view.svg">
+            </button>
+
+        </div>
+        `;
+
+    });
 }
 
 /* =========================
@@ -319,6 +334,12 @@ function initMonitoring() {
         document.querySelector("#videoGrid").classList.remove("hidden");
 
         showAllCctv();
+
+        loadMonitoringStatus("");
+
+        monitoringTimer = setInterval(() => {
+          loadMonitoringStatus("");
+        }, 1000);
 
         return;
       }

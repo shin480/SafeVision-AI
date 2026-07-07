@@ -73,11 +73,19 @@ def check_danger_zone_intrusion(results, model, danger_zones):
     if boxes is None or len(boxes) == 0:
         return False
 
+    target_classes = [
+        "person",
+        "helmet",
+        "no_helmet",
+        "safety_vest",
+        "no_safety_vest"
+    ]
+
     for box in boxes:
         cls_id = int(box.cls[0])
         class_name = model.names[cls_id]
 
-        if class_name != "person":
+        if class_name not in target_classes:
             continue
 
         x1, y1, x2, y2 = box.xyxy[0]
@@ -122,7 +130,7 @@ def make_violation_type(detection_result):
     - 안전모 + 안전조끼 둘 다 미착용: PPE 미착용
     - 안전모만 미착용: 안전모 미착용
     - 안전조끼만 미착용: 안전조끼 미착용
-    - 위험구역 침입이 같이 있으면 뒤에 추가
+    - 위험구역 진입이 같이 있으면 뒤에 추가
     """
 
     no_helmet = detection_result.get("no_helmet", 0) > 0
@@ -139,7 +147,7 @@ def make_violation_type(detection_result):
         violation_types.append("안전조끼 미착용")
 
     if in_danger_zone:
-        violation_types.append("위험구역 침입")
+        violation_types.append("위험구역 진입")
 
     if not violation_types:
         return "NONE"
@@ -248,7 +256,7 @@ def main():
 
             annotated2 = results2[0].plot()
             detection_result2 = save_capture_if_needed(annotated2, "CCTV02", detection_result2)
-            save_event_with_capture("CCTV02", detection_result1)
+            save_event_with_capture("CCTV02", detection_result2)
 
             print("Camera 2:", detection_result2)
 
@@ -313,7 +321,7 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
 
         print("현재 CCTV ID:", cctv_id)
         print("위험구역 조회 결과:", danger_zones)
-        print("위험구역 침입 여부:", in_danger_zone)
+        print("위험구역 진입 여부:", in_danger_zone)
 
         for zone in danger_zones:
             cv2.rectangle(
