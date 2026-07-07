@@ -126,10 +126,10 @@ def events():
 
     result = response.json()
 
-    # 샘플 이미지 경로
+    # DB에 저장된 실제 캡처 이미지 경로 사용
     if result.get("success") and "data" in result:
         for event in result["data"]:
-            event["imageUrl"] = "/static/captures/capture_sample.jpg"
+            event["imageUrl"] = event.get("capture_path")
 
     return jsonify(result)
 
