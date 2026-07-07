@@ -298,3 +298,16 @@ button {
   gap: 8px;
   margin-top: 10px;
 }
+
+.table-scroll {
+  max-height: 510px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.cctv-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
+}
