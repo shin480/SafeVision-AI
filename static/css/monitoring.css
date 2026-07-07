@@ -65,8 +65,18 @@ body {
   height: 34px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  padding: 0 10px;
+  padding: 0 34px 0 10px;
   font-weight: 700;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-color: #ffffff;
+  background-image: url("../img/select-arrow.svg");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  background-size: 12px 8px;
 }
 
 .monitor-toolbar button {

@@ -1,3 +1,5 @@
+let monitoringTimer = null;
+
 const API = {
   cctvList: "/api/cctv",
   monitoringStatus: "/api/monitoring/status",
@@ -277,8 +279,31 @@ function initMonitoring() {
     searchBtn.addEventListener("click", () => {
       const cctvId = cctvSelect.value;
 
+      // 기존 타이머가 있으면 먼저 중지
+      if (monitoringTimer) {
+        clearInterval(monitoringTimer);
+        monitoringTimer = null;
+      }
+
+      // CCTV를 선택하지 않은 경우 화면 초기화
+      if (!cctvId) {
+        updateVideoFeed("");
+        resetMonitoringView();
+        return;
+      }
+
+      // 영상 스트리밍 시작
       updateVideoFeed(cctvId);
-      loadMonitoringStatus(cctvId);
+
+      // 처음에는 YOLO가 아직 최신 상태를 만들기 전일 수 있어서 약간 늦게 1회 조회
+      setTimeout(() => {
+        loadMonitoringStatus(cctvId);
+      }, 500);
+
+      // 이후 1초마다 최신 감지 상태 조회
+      monitoringTimer = setInterval(() => {
+        loadMonitoringStatus(cctvId);
+      }, 1000);
     });
   }
 }

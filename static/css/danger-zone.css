@@ -37,16 +37,21 @@
 }
 
 .zone-toolbar select {
-  width: 190px;
-  height: 38px;
-  padding: 0 12px;
+  width: 250px;
+  height: 36px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  background: #ffffff;
-  font-size: 15px;
-  font-weight: 700;
-  color: #1f2937;
-  outline: none;
+  padding: 0 34px 0 12px;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-color: #ffffff;
+  background-image: url("../img/select-arrow.svg");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  background-size: 12px 8px;
 }
 
 .zone-toolbar button {

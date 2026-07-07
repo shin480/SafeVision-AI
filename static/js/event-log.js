@@ -83,7 +83,7 @@ function renderTable(data) {
       <td>${event.cctv}</td>
       <td>${event.type}</td>
       <td class="${getRiskClass(event.risk)}">${event.risk}</td>
-      <td class="${event.status !== "미확인" ? "status-ok" : ""}">
+      <td class="${getStatusClass(event.status)}">
         ${event.status}
       </td>
       <td>
@@ -106,6 +106,13 @@ function getRiskClass(risk) {
   if (risk === "WARNING") return "risk-warning";
   if (risk === "DANGER") return "risk-danger";
   if (risk === "CRITICAL") return "risk-critical";
+  return "";
+}
+
+function getStatusClass(status) {
+  if (status === "미확인") return "status-unchecked";
+  if (status === "확인") return "status-confirmed";
+  if (status === "조치완료") return "status-completed";
   return "";
 }
 
