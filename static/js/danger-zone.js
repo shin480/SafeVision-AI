@@ -236,7 +236,7 @@ async function loadCctvOptions() {
   }
 }
 
-function saveDangerZone() {
+async function saveDangerZone() {
   if (
     zone.x1 === null ||
     zone.y1 === null ||
@@ -244,6 +244,11 @@ function saveDangerZone() {
     zone.y2 === null
   ) {
     alert("위험구역을 먼저 설정하세요.");
+    return;
+  }
+
+  if (!cctvSelect.value) {
+    alert("CCTV를 선택하세요.");
     return;
   }
 
@@ -256,15 +261,29 @@ function saveDangerZone() {
     y2: zone.y2,
   };
 
-  console.log("위험구역 저장 데이터:", payload);
-  alert("위험구역 좌표가 저장되었습니다.");
+  try {
+    const response = await fetch("/api/danger-zone", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
 
-  // 나중에 API 연결 시 사용
-  // fetch("/api/danger-zone", {
-  //   method: "POST",
-  //   headers: { "Content-Type": "application/json" },
-  //   body: JSON.stringify(payload)
-  // });
+    const result = await response.json();
+
+    console.log("저장 결과:", result);
+
+    if (result.success) {
+      alert("위험구역이 저장되었습니다.");
+    } else {
+      alert(result.message || "저장 실패");
+    }
+
+  } catch (error) {
+    console.error("위험구역 저장 오류:", error);
+    alert("서버 오류가 발생했습니다.");
+  }
 }
 
 canvas.addEventListener("mousedown", startDraw);

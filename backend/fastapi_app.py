@@ -308,3 +308,189 @@ def statistics_data(
     end_date: str = None
 ):
     return get_statistics_data(start_date, end_date)
+
+# -----------------------------
+# danger zone
+# -----------------------------
+
+@app.get("/api/danger-zone/{cctv_id}")
+def get_danger_zone(cctv_id: str):
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        sql = text("""
+            SELECT
+                zone_id,
+                cctv_id,
+                zone_name,
+                x1,
+                y1,
+                x2,
+                y2,
+                is_active
+            FROM danger_zone
+            WHERE cctv_id = :cctv_id
+              AND is_active = 1
+            ORDER BY updated_at DESC
+            LIMIT 1
+        """)
+
+        row = conn.execute(sql, {"cctv_id": cctv_id}).mappings().first()
+
+        return {
+            "success": True,
+            "data": dict(row) if row else None
+        }
+
+    except Exception as e:
+        print("위험구역 조회 오류:", e)
+        return {"success": False, "message": "위험구역 조회 실패", "data": None}
+
+    finally:
+        if conn:
+            conn.close()
+
+
+@app.post("/api/danger-zone")
+def save_danger_zone(data: dict = Body(...)):
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        cctv_id = data.get("cctv_id")
+        zone_name = data.get("zone_name", "위험구역 1")
+
+        x1 = int(data.get("x1"))
+        y1 = int(data.get("y1"))
+        x2 = int(data.get("x2"))
+        y2 = int(data.get("y2"))
+
+        x1, x2 = min(x1, x2), max(x1, x2)
+        y1, y2 = min(y1, y2), max(y1, y2)
+
+        check_sql = text("""
+            SELECT zone_id
+            FROM danger_zone
+            WHERE cctv_id = :cctv_id
+              AND is_active = 1
+            ORDER BY updated_at DESC
+            LIMIT 1
+        """)
+
+        existing = conn.execute(check_sql, {"cctv_id": cctv_id}).mappings().first()
+
+        if existing:
+            sql = text("""
+                UPDATE danger_zone
+                SET
+                    zone_name = :zone_name,
+                    x1 = :x1,
+                    y1 = :y1,
+                    x2 = :x2,
+                    y2 = :y2,
+                    is_active = 1
+                WHERE zone_id = :zone_id
+            """)
+
+            conn.execute(sql, {
+                "zone_id": existing["zone_id"],
+                "zone_name": zone_name,
+                "x1": x1,
+                "y1": y1,
+                "x2": x2,
+                "y2": y2
+            })
+
+        else:
+            sql = text("""
+                INSERT INTO danger_zone (
+                    cctv_id,
+                    zone_name,
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    is_active
+                )
+                VALUES (
+                    :cctv_id,
+                    :zone_name,
+                    :x1,
+                    :y1,
+                    :x2,
+                    :y2,
+                    1
+                )
+            """)
+
+            conn.execute(sql, {
+                "cctv_id": cctv_id,
+                "zone_name": zone_name,
+                "x1": x1,
+                "y1": y1,
+                "x2": x2,
+                "y2": y2
+            })
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": "위험구역이 저장되었습니다."
+        }
+
+    except Exception as e:
+        print("위험구역 저장 오류:", e)
+
+        if conn:
+            conn.rollback()
+
+        return {
+            "success": False,
+            "message": "위험구역 저장 실패"
+        }
+
+    finally:
+        if conn:
+            conn.close()
+
+
+@app.delete("/api/danger-zone/{cctv_id}")
+def delete_danger_zone(cctv_id: str):
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        sql = text("""
+            UPDATE danger_zone
+            SET is_active = 0
+            WHERE cctv_id = :cctv_id
+              AND is_active = 1
+        """)
+
+        conn.execute(sql, {"cctv_id": cctv_id})
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": "위험구역이 초기화되었습니다."
+        }
+
+    except Exception as e:
+        print("위험구역 초기화 오류:", e)
+
+        if conn:
+            conn.rollback()
+
+        return {
+            "success": False,
+            "message": "위험구역 초기화 실패"
+        }
+
+    finally:
+        if conn:
+            conn.close()

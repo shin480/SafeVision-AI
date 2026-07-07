@@ -95,13 +95,6 @@ def monitoring_status():
     return jsonify(response.json())
 
 # ----------------
-# 위험구역 설정
-# ----------------
-@app.route("/danger-zone")
-def danger_zone():
-    return render_template("danger-zone.html")
-
-# ----------------
 # 이벤트 로그 / 통계
 # ----------------
 @app.route("/event-log")
@@ -167,6 +160,23 @@ def statistics_data():
 @app.route("/db")
 def db():
     response = requests.get(f"{FASTAPI_URL}/db")
+    return jsonify(response.json())
+
+# ----------------
+# 위험구역 설정
+# ----------------
+@app.route("/danger-zone")
+def danger_zone():
+    return render_template("danger-zone.html")
+
+
+@app.route("/api/danger-zone", methods=["POST"])
+def save_danger_zone():
+    response = requests.post(
+        f"{FASTAPI_URL}/api/danger-zone",
+        json=request.get_json()
+    )
+
     return jsonify(response.json())
 
 if __name__ == "__main__":
