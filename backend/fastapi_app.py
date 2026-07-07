@@ -452,6 +452,47 @@ def save_danger_zone(data: dict = Body(...)):
         if conn:
             conn.close()
 
+@app.get("/api/danger-zone")
+def get_danger_zone_list():
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        sql = text("""
+            SELECT
+                zone_id,
+                cctv_id,
+                zone_name,
+                x1,
+                y1,
+                x2,
+                y2,
+                DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS created_at
+            FROM danger_zone
+            WHERE is_active = 1
+            ORDER BY created_at DESC
+        """)
+
+        result = conn.execute(sql).mappings().all()
+
+        return {
+            "success": True,
+            "data": [dict(row) for row in result]
+        }
+
+    except Exception as e:
+        print("위험구역 목록 조회 오류:", e)
+
+        return {
+            "success": False,
+            "data": []
+        }
+
+    finally:
+        if conn:
+            conn.close()
+
 
 @app.delete("/api/danger-zone/{cctv_id}")
 def delete_danger_zone(cctv_id: str):

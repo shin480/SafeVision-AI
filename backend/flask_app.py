@@ -179,5 +179,20 @@ def save_danger_zone():
 
     return jsonify(response.json())
 
+@app.route("/danger-zone-manage")
+def danger_zone_manage():
+    return render_template("danger-zone-manage.html")
+
+@app.route("/api/danger-zone", methods=["GET"])
+def get_danger_zones():
+    response = requests.get(f"{FASTAPI_URL}/api/danger-zone")
+    return jsonify(response.json())
+
+
+@app.route("/api/danger-zone/<int:zone_id>", methods=["DELETE"])
+def delete_danger_zone(zone_id):
+    response = requests.delete(f"{FASTAPI_URL}/api/danger-zone/{zone_id}")
+    return jsonify(response.json())
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
