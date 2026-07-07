@@ -131,7 +131,14 @@ def events():
         }
     )
 
-    return jsonify(response.json())
+    result = response.json()
+
+    # 샘플 이미지 경로
+    if result.get("success") and "data" in result:
+        for event in result["data"]:
+            event["imageUrl"] = "/static/captures/cctv01_20260707_101257.jpg"
+
+    return jsonify(result)
 
 # ----------------
 # 대시보드

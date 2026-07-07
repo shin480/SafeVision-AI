@@ -109,6 +109,33 @@ function getRiskClass(risk) {
   return "";
 }
 
+function updateCaptureImage(event) {
+  const captureImage = document.getElementById("captureImage");
+  const capturePlaceholder = document.getElementById("capturePlaceholder");
+
+  if (!captureImage || !capturePlaceholder) {
+    return;
+  }
+
+  const imageUrl =
+    event.imageUrl ||
+    event.captureImage ||
+    event.capturePath ||
+    event.capture_url ||
+    event.image_url;
+
+  if (!imageUrl) {
+    captureImage.removeAttribute("src");
+    captureImage.classList.add("hidden");
+    capturePlaceholder.classList.remove("hidden");
+    return;
+  }
+
+  captureImage.src = imageUrl;
+  captureImage.classList.remove("hidden");
+  capturePlaceholder.classList.add("hidden");
+}
+
 function openDetail(id) {
   const event = events.find((item) => item.id === id);
 
@@ -122,6 +149,8 @@ function openDetail(id) {
 
   document.getElementById("statusSelect").value = event.status;
   document.getElementById("memoInput").value = event.memo || "";
+
+  updateCaptureImage(event);
 
   document.getElementById("detailModal").classList.add("show");
 
@@ -145,3 +174,63 @@ document.getElementById("searchBtn").addEventListener("click", () => {
 });
 
 loadEvents();
+
+function openImageFullscreen() {
+  const captureImage = document.getElementById("captureImage");
+  const fullscreenModal = document.getElementById("imageFullscreenModal");
+  const fullscreenImage = document.getElementById("fullscreenCaptureImage");
+
+  if (!captureImage || !fullscreenModal || !fullscreenImage) {
+    return;
+  }
+
+  if (!captureImage.src || captureImage.classList.contains("hidden")) {
+    alert("확대할 캡처 이미지가 없습니다.");
+    return;
+  }
+
+  fullscreenImage.src = captureImage.src;
+  fullscreenModal.classList.add("active");
+}
+
+function closeImageFullscreen() {
+  const fullscreenModal = document.getElementById("imageFullscreenModal");
+  const fullscreenImage = document.getElementById("fullscreenCaptureImage");
+
+  if (!fullscreenModal || !fullscreenImage) {
+    return;
+  }
+
+  fullscreenModal.classList.remove("active");
+  fullscreenImage.removeAttribute("src");
+}
+
+function initImageFullscreen() {
+  const fullscreenBtn = document.getElementById("imageFullscreenBtn");
+  const fullscreenModal = document.getElementById("imageFullscreenModal");
+  const closeBtn = document.getElementById("closeImageFullscreenBtn");
+
+  if (fullscreenBtn) {
+    fullscreenBtn.addEventListener("click", openImageFullscreen);
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", closeImageFullscreen);
+  }
+
+  if (fullscreenModal) {
+    fullscreenModal.addEventListener("click", (event) => {
+      if (event.target === fullscreenModal) {
+        closeImageFullscreen();
+      }
+    });
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeImageFullscreen();
+    }
+  });
+}
+
+initImageFullscreen();

@@ -55,7 +55,15 @@
       <h2>이벤트 상세</h2>
 
       <div class="capture-box">
-        캡처 이미지
+        <div id="capturePlaceholder" class="capture-placeholder">
+          캡처 이미지
+        </div>
+
+        <img id="captureImage" class="capture-image hidden" alt="이벤트 캡처 이미지">
+
+        <button id="imageFullscreenBtn" class="image-fullscreen-btn" type="button" title="전체보기">
+          <img src="../static/img/full-view.svg" alt="전체보기">
+        </button>
       </div>
 
       <div class="detail-content">
@@ -106,7 +114,12 @@
       </div>
     </div>
   </div>
-
+  <div id="imageFullscreenModal" class="image-fullscreen-modal">
+    <div class="image-fullscreen-content">
+      <button id="closeImageFullscreenBtn" class="close-image-fullscreen-btn" type="button">×</button>
+      <img id="fullscreenCaptureImage" class="fullscreen-capture-image" alt="이벤트 캡처 확대 이미지">
+    </div>
+  </div>
   <script src="../static/js/event-log.js"></script>
 </body>
 </html>
