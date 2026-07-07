@@ -335,6 +335,12 @@ function initMonitoring() {
 
         showAllCctv();
 
+        loadMonitoringStatus("");
+
+        monitoringTimer = setInterval(() => {
+          loadMonitoringStatus("");
+        }, 1000);
+
         return;
       }
 

@@ -62,82 +62,174 @@ def get_event_logs(start_date=None, end_date=None, cctv_id=None):
             conn.close()
 
 # 실시간 모니터링
+# 실시간 모니터링
 def get_monitoring_status(cctvId=None):
     conn = None
 
     try:
         conn = get_engine()
 
-        # 1. 해당 CCTV의 최신 감지 로그
-        latest_detection_sql = text("""
-            SELECT
-                worker_count,
-                helmet_count,
-                no_helmet_count,
-                vest_count,
-                no_vest_count,
-                ppe_wear_rate,
-                detected_at
-            FROM detection_log
-            WHERE cctv_id = :cctv_id
-            ORDER BY detected_at DESC
-            LIMIT 1
-        """)
+        # =========================
+        # 1. 개별 CCTV 조회
+        # =========================
+        if cctvId:
+            latest_detection_sql = text("""
+                SELECT
+                    worker_count,
+                    helmet_count,
+                    no_helmet_count,
+                    vest_count,
+                    no_vest_count,
+                    ppe_wear_rate,
+                    detected_at
+                FROM detection_log
+                WHERE cctv_id = :cctv_id
+                ORDER BY detected_at DESC
+                LIMIT 1
+            """)
 
-        detection = conn.execute(
-            latest_detection_sql,
-            {"cctv_id": cctvId}
-        ).mappings().first()
+            detection = conn.execute(
+                latest_detection_sql,
+                {"cctv_id": cctvId}
+            ).mappings().first()
 
-        # 2. 해당 CCTV의 최신 이벤트
-        latest_event_sql = text("""
-            SELECT
-                risk_score,
-                risk_level,
-                violation_type,
-                detected_at
-            FROM event_log
-            WHERE cctv_id = :cctv_id
-            ORDER BY detected_at DESC
-            LIMIT 1
-        """)
+            latest_event_sql = text("""
+                SELECT
+                    risk_score,
+                    risk_level,
+                    violation_type,
+                    detected_at
+                FROM event_log
+                WHERE cctv_id = :cctv_id
+                ORDER BY detected_at DESC
+                LIMIT 1
+            """)
 
-        event = conn.execute(
-            latest_event_sql,
-            {"cctv_id": cctvId}
-        ).mappings().first()
+            event = conn.execute(
+                latest_event_sql,
+                {"cctv_id": cctvId}
+            ).mappings().first()
 
-        # 3. 오늘 위반 현황 집계
-        violation_count_sql = text("""
-            SELECT
-                SUM(CASE 
-                    WHEN violation_type LIKE '%안전모 미착용%' 
-                    OR violation_type LIKE '%PPE 미착용%' 
-                    THEN 1 ELSE 0 
-                END) AS helmet_violation,
+            violation_count_sql = text("""
+                SELECT
+                    SUM(CASE 
+                        WHEN violation_type LIKE '%안전모 미착용%' 
+                        OR violation_type LIKE '%PPE 미착용%' 
+                        THEN 1 ELSE 0 
+                    END) AS helmet_violation,
 
-                SUM(CASE 
-                    WHEN violation_type LIKE '%안전조끼 미착용%' 
-                    OR violation_type LIKE '%PPE 미착용%' 
-                    THEN 1 ELSE 0 
-                END) AS vest_violation,
+                    SUM(CASE 
+                        WHEN violation_type LIKE '%안전조끼 미착용%' 
+                        OR violation_type LIKE '%PPE 미착용%' 
+                        THEN 1 ELSE 0 
+                    END) AS vest_violation,
 
-                SUM(CASE 
-                    WHEN violation_type LIKE '%위험구역 진입%' 
-                    THEN 1 ELSE 0 
-                END) AS zone_violation
-            FROM event_log
-            WHERE cctv_id = :cctv_id
-            AND DATE(detected_at) = CURDATE()
-        """)
+                    SUM(CASE 
+                        WHEN violation_type LIKE '%위험구역 진입%' 
+                        THEN 1 ELSE 0 
+                    END) AS zone_violation
+                FROM event_log
+                WHERE cctv_id = :cctv_id
+                  AND DATE(detected_at) = CURDATE()
+            """)
 
-        violations = conn.execute(
-            violation_count_sql,
-            {"cctv_id": cctvId}
-        ).mappings().first()
+            violations = conn.execute(
+                violation_count_sql,
+                {"cctv_id": cctvId}
+            ).mappings().first()
 
-        risk_level = event["risk_level"] if event else "SAFE"
-        risk_score = event["risk_score"] if event else 0
+            risk_level = event["risk_level"] if event else "SAFE"
+            risk_score = event["risk_score"] if event else 0
+
+            worker_count = detection["worker_count"] if detection else 0
+            helmet_count = detection["helmet_count"] if detection else 0
+            no_helmet_count = detection["no_helmet_count"] if detection else 0
+            vest_count = detection["vest_count"] if detection else 0
+            no_vest_count = detection["no_vest_count"] if detection else 0
+            ppe_rate = (
+                float(detection["ppe_wear_rate"])
+                if detection and detection["ppe_wear_rate"] is not None
+                else 0
+            )
+            last_detected = str(detection["detected_at"]) if detection else "-"
+
+        # =========================
+        # 2. 전체 CCTV 조회
+        # =========================
+        else:
+            latest_detection_sql = text("""
+                SELECT
+                    SUM(worker_count) AS worker_count,
+                    SUM(helmet_count) AS helmet_count,
+                    SUM(no_helmet_count) AS no_helmet_count,
+                    SUM(vest_count) AS vest_count,
+                    SUM(no_vest_count) AS no_vest_count,
+                    AVG(ppe_wear_rate) AS ppe_wear_rate,
+                    MAX(detected_at) AS detected_at
+                FROM (
+                    SELECT dl.*
+                    FROM detection_log dl
+                    INNER JOIN (
+                        SELECT cctv_id, MAX(detected_at) AS latest_time
+                        FROM detection_log
+                        GROUP BY cctv_id
+                    ) latest
+                    ON dl.cctv_id = latest.cctv_id
+                    AND dl.detected_at = latest.latest_time
+                ) latest_detection
+            """)
+
+            detection = conn.execute(latest_detection_sql).mappings().first()
+
+            latest_event_sql = text("""
+                SELECT
+                    MAX(risk_score) AS risk_score,
+                    CASE
+                        WHEN SUM(CASE WHEN risk_level = 'CRITICAL' THEN 1 ELSE 0 END) > 0 THEN 'CRITICAL'
+                        WHEN SUM(CASE WHEN risk_level = 'DANGER' THEN 1 ELSE 0 END) > 0 THEN 'DANGER'
+                        WHEN SUM(CASE WHEN risk_level = 'WARNING' THEN 1 ELSE 0 END) > 0 THEN 'WARNING'
+                        ELSE 'SAFE'
+                    END AS risk_level
+                FROM event_log
+                WHERE DATE(detected_at) = CURDATE()
+            """)
+
+            event = conn.execute(latest_event_sql).mappings().first()
+
+            violation_count_sql = text("""
+                SELECT
+                    SUM(CASE 
+                        WHEN violation_type LIKE '%안전모 미착용%' 
+                        OR violation_type LIKE '%PPE 미착용%' 
+                        THEN 1 ELSE 0 
+                    END) AS helmet_violation,
+
+                    SUM(CASE 
+                        WHEN violation_type LIKE '%안전조끼 미착용%' 
+                        OR violation_type LIKE '%PPE 미착용%' 
+                        THEN 1 ELSE 0 
+                    END) AS vest_violation,
+
+                    SUM(CASE 
+                        WHEN violation_type LIKE '%위험구역 진입%' 
+                        THEN 1 ELSE 0 
+                    END) AS zone_violation
+                FROM event_log
+                WHERE DATE(detected_at) = CURDATE()
+            """)
+
+            violations = conn.execute(violation_count_sql).mappings().first()
+
+            risk_level = event["risk_level"] if event and event["risk_level"] else "SAFE"
+            risk_score = event["risk_score"] if event and event["risk_score"] is not None else 0
+
+            worker_count = int(detection["worker_count"] or 0)
+            helmet_count = int(detection["helmet_count"] or 0)
+            no_helmet_count = int(detection["no_helmet_count"] or 0)
+            vest_count = int(detection["vest_count"] or 0)
+            no_vest_count = int(detection["no_vest_count"] or 0)
+            ppe_rate = float(detection["ppe_wear_rate"] or 0)
+            last_detected = str(detection["detected_at"]) if detection and detection["detected_at"] else "-"
 
         risk_text_map = {
             "SAFE": "안전",
@@ -145,20 +237,19 @@ def get_monitoring_status(cctvId=None):
             "DANGER": "위험",
             "CRITICAL": "심각"
         }
-        print(cctvId, risk_level, risk_text_map)
 
         return {
-            "cctvId": cctvId,
+            "cctvId": cctvId if cctvId else "ALL",
             "riskLevel": risk_level,
             "riskText": risk_text_map.get(risk_level, "-"),
-            "riskScore": risk_score,
+            "riskScore": int(risk_score or 0),
 
-            "workerCount": detection["worker_count"] if detection else 0,
-            "helmetCount": detection["helmet_count"] if detection else 0,
-            "noHelmetCount": detection["no_helmet_count"] if detection else 0,
-            "vestCount": detection["vest_count"] if detection else 0,
-            "noVestCount": detection["no_vest_count"] if detection else 0,
-            "ppeRate": float(detection["ppe_wear_rate"]) if detection and detection["ppe_wear_rate"] is not None else 0,
+            "workerCount": worker_count,
+            "helmetCount": helmet_count,
+            "noHelmetCount": no_helmet_count,
+            "vestCount": vest_count,
+            "noVestCount": no_vest_count,
+            "ppeRate": ppe_rate,
 
             "violations": {
                 "helmet": int(violations["helmet_violation"] or 0),
@@ -166,21 +257,28 @@ def get_monitoring_status(cctvId=None):
                 "zone": int(violations["zone_violation"] or 0)
             },
 
-            "lastDetected": str(detection["detected_at"]) if detection else "-"
+            "lastDetected": last_detected
         }
 
     except Exception as e:
         print("모니터링 상태 조회 오류:", e)
         return {
-            "cctvId": cctvId,
+            "cctvId": cctvId if cctvId else "ALL",
             "riskLevel": "SAFE",
             "riskText": "조회 실패",
             "riskScore": 0,
+            "workerCount": 0,
+            "helmetCount": 0,
+            "noHelmetCount": 0,
+            "vestCount": 0,
+            "noVestCount": 0,
+            "ppeRate": 0,
             "violations": {
                 "helmet": 0,
                 "vest": 0,
                 "zone": 0
-            }
+            },
+            "lastDetected": "-"
         }
 
     finally:
