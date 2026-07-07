@@ -1,7 +1,7 @@
 .main {
   flex: 1;
   min-width: 0;
-  padding: 34px 48px 36px;
+  padding: 24px 48px 24px;
   background: #f4f7fa;
 }
 
@@ -68,7 +68,7 @@
 
 .zone-card {
   width: 100%;
-  height: calc(100vh - 190px);
+  height: calc(100vh - 230px);
   padding: 22px 26px;
   border-radius: 20px;
   background: #ffffff;
@@ -80,7 +80,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .zone-toolbar label {
@@ -125,7 +125,7 @@
   grid-template-columns: 1fr 330px;
   gap: 36px;
   align-items: start;
-  height: calc(100% - 58px);
+  height: calc(100% - 50px);
 }
 
 .video-area {
@@ -135,7 +135,7 @@
 .zone-canvas {
   position: relative;
   width: 100%;
-  height: calc(100% - 82px);
+  height: calc(100% - 70px);
   background: #d9d9d9;
   overflow: hidden;
   cursor: crosshair;
@@ -187,7 +187,7 @@
   display: flex;
   gap: 14px;
   align-items: flex-start;
-  margin-top: 16px;
+  margin-top: 10px;
   padding: 12px 18px;
   background: #eefaf2;
   border-radius: 6px;
@@ -211,28 +211,28 @@
 }
 
 .zone-panel h2 {
-  margin: 0 0 28px;
+  margin: 0 0 18px;
   font-size: 20px;
   font-weight: 500;
   color: #111827;
 }
 
 .zone-panel h3 {
-  margin: 24px 0 22px;
+  margin: 16px 0 14px;
   font-size: 18px;
   font-weight: 500;
   color: #111827;
 }
 
 .zone-panel hr {
-  margin: 22px 0;
+  margin: 16px 0;
   border: none;
   border-top: 1px solid #d8d8d8;
 }
 
 .field-label {
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   font-size: 16px;
   color: #111827;
 }
@@ -257,7 +257,7 @@
   grid-template-columns: 44px 1fr 28px;
   align-items: center;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .coord-row label {
@@ -281,7 +281,7 @@
 }
 
 .info-box {
-  margin-top: 22px;
+  margin-top: 14px;
   padding: 14px;
   border-radius: 5px;
   background: #eaf8ef;
@@ -296,7 +296,7 @@
 }
 
 .zone-actions {
-  margin-top: 26px;
+  margin-top: 16px;
 }
 
 .reset-btn,
@@ -310,7 +310,7 @@
 }
 
 .reset-btn {
-  margin-bottom: 18px;
+  margin-bottom: 12px;
   border: 1px solid #cfd4da;
   background: #ffffff;
   color: #9ca3af;
