@@ -85,8 +85,8 @@ body {
 }
 
 .summary-card {
-  height: 165px;
-  padding: 18px 22px;
+  height: 160px;
+  padding: 34px 26px 22px;
   border-radius: 16px;
   background: #ffffff;
   box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12);
@@ -116,8 +116,8 @@ body {
 }
 
 .chart-card {
-  height: 450px;
-  padding: 26px 28px;
+  height: 480px;
+  padding: 30px 30px 0px;
   border-radius: 18px;
   background: #ffffff;
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
