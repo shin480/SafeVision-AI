@@ -110,12 +110,25 @@ def get_monitoring_status(cctvId=None):
         # 3. 오늘 위반 현황 집계
         violation_count_sql = text("""
             SELECT
-                SUM(CASE WHEN violation_type = '안전모 미착용' THEN 1 ELSE 0 END) AS helmet_violation,
-                SUM(CASE WHEN violation_type = '안전조끼 미착용' THEN 1 ELSE 0 END) AS vest_violation,
-                SUM(CASE WHEN violation_type = '위험구역 침입' THEN 1 ELSE 0 END) AS zone_violation
+                SUM(CASE 
+                    WHEN violation_type LIKE '%안전모 미착용%' 
+                    OR violation_type LIKE '%PPE 미착용%' 
+                    THEN 1 ELSE 0 
+                END) AS helmet_violation,
+
+                SUM(CASE 
+                    WHEN violation_type LIKE '%안전조끼 미착용%' 
+                    OR violation_type LIKE '%PPE 미착용%' 
+                    THEN 1 ELSE 0 
+                END) AS vest_violation,
+
+                SUM(CASE 
+                    WHEN violation_type LIKE '%위험구역 침입%' 
+                    THEN 1 ELSE 0 
+                END) AS zone_violation
             FROM event_log
             WHERE cctv_id = :cctv_id
-              AND DATE(detected_at) = CURDATE()
+            AND DATE(detected_at) = CURDATE()
         """)
 
         violations = conn.execute(
@@ -457,11 +470,6 @@ def save_event_with_capture(cctv_id, detection_result):
         helmet_status = "미착용" if detection_result.get("no_helmet", 0) > 0 else "착용"
         vest_status = "미착용" if detection_result.get("no_safety_vest", 0) > 0 else "착용"
 
-        if helmet_status == "착용" and vest_status == "착용":
-            ppe_status = "준수"
-        else:
-            ppe_status = "미준수"
-
         # 1. event_log 저장
         event_sql = text("""
             INSERT INTO event_log (
@@ -471,7 +479,6 @@ def save_event_with_capture(cctv_id, detection_result):
                 risk_level,
                 helmet_status,
                 vest_status,
-                ppe_status,
                 capture_path,
                 status
             )
@@ -482,7 +489,6 @@ def save_event_with_capture(cctv_id, detection_result):
                 :risk_level,
                 :helmet_status,
                 :vest_status,
-                :ppe_status,
                 :capture_path,
                 '미확인'
             )
@@ -495,7 +501,6 @@ def save_event_with_capture(cctv_id, detection_result):
             "risk_level": risk_level,
             "helmet_status": helmet_status,
             "vest_status": vest_status,
-            "ppe_status": ppe_status,
             "capture_path": capture_url or capture_path
         })
 
@@ -528,6 +533,7 @@ def save_event_with_capture(cctv_id, detection_result):
 
         conn.commit()
 
+        print("이벤트/캡처 저장 성공:", event_id)
         return event_id
 
     except Exception as e:

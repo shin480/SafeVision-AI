@@ -117,24 +117,34 @@ def add_risk_result(detection_result, in_danger_zone=False):
 def make_violation_type(detection_result):
     """
     감지 결과를 바탕으로 위반 유형을 만든다.
-    쿨다운 중복 캡처 기준으로 사용된다.
+    DB 저장 및 화면 표시용 위반명을 반환한다.
+
+    - 안전모 + 안전조끼 둘 다 미착용: PPE 미착용
+    - 안전모만 미착용: 안전모 미착용
+    - 안전조끼만 미착용: 안전조끼 미착용
+    - 위험구역 침입이 같이 있으면 뒤에 추가
     """
+
+    no_helmet = detection_result.get("no_helmet", 0) > 0
+    no_safety_vest = detection_result.get("no_safety_vest", 0) > 0
+    in_danger_zone = detection_result.get("in_danger_zone")
 
     violation_types = []
 
-    if detection_result.get("no_helmet", 0) > 0:
-        violation_types.append("NO_HELMET")
+    if no_helmet and no_safety_vest:
+        violation_types.append("PPE 미착용")
+    elif no_helmet:
+        violation_types.append("안전모 미착용")
+    elif no_safety_vest:
+        violation_types.append("안전조끼 미착용")
 
-    if detection_result.get("no_safety_vest", 0) > 0:
-        violation_types.append("NO_SAFETY_VEST")
-
-    if detection_result.get("in_danger_zone"):
-        violation_types.append("DANGER_ZONE")
+    if in_danger_zone:
+        violation_types.append("위험구역 침입")
 
     if not violation_types:
         return "NONE"
 
-    return "_".join(violation_types)
+    return " + ".join(violation_types)
 
 
 def save_capture_if_needed(capture_frame, cctv_id, detection_result):
@@ -221,6 +231,7 @@ def main():
 
             annotated1 = results1[0].plot()
             detection_result1 = save_capture_if_needed(annotated1, "CCTV01", detection_result1)
+            save_event_with_capture("CCTV01", detection_result1)
 
             print("Camera 1:", detection_result1)
 
@@ -237,6 +248,7 @@ def main():
 
             annotated2 = results2[0].plot()
             detection_result2 = save_capture_if_needed(annotated2, "CCTV02", detection_result2)
+            save_event_with_capture("CCTV02", detection_result1)
 
             print("Camera 2:", detection_result2)
 
@@ -253,6 +265,7 @@ def main():
 
             annotated3 = results3[0].plot()
             detection_result3 = save_capture_if_needed(annotated3, "CCTV03", detection_result3)
+            save_event_with_capture("CCTV03", detection_result3)
 
             print("Camera 3:", detection_result3)
 
@@ -322,6 +335,7 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
             )
 
         detection_result = save_capture_if_needed(annotated, cctv_id, detection_result)
+        print("DB 저장 직전:", cctv_id, detection_result)
         save_event_with_capture(cctv_id, detection_result)
 
         latest_detection_status[cctv_id] = {

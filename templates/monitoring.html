@@ -16,26 +16,40 @@
 
     <section class="monitor-card">
       <div class="monitor-toolbar">
-        <label for="cctvSelect">CCTV 선택</label>
+        <label for="cctvSelect">전체 CCTV</label>
 
         <select id="cctvSelect">
-          <option value="">CCTV 선택</option>
+          <option value="">전체 CCTV</option>
         </select>
 
         <button id="searchBtn" type="button">검색</button>
       </div>
 
       <div class="video-box" id="videoBox">
-        <div id="videoPlaceholder" class="video-placeholder">
-          CCTV를 선택하세요.
-        </div>
 
-        <img id="cctvVideo" class="cctv-video hidden" alt="실시간 CCTV">
+        <!-- 단일 CCTV -->
+        <div id="singleVideoView">
+            <div id="videoPlaceholder" class="video-placeholder">
+                CCTV를 선택하세요.
+            </div>
 
-        <!-- 전체보기 버튼 -->
-        <button id="fullscreenBtn" class="fullscreen-btn" type="button" title="전체보기">
-          <img src="../static/img/full-view.svg" alt="전체보기">
-        </button>
+            <img id="cctvVideo"
+                class="cctv-video hidden"
+                alt="실시간 CCTV">
+
+            <button id="fullscreenBtn"
+                    class="fullscreen-btn"
+                    type="button"
+                    title="전체보기">
+                <img src="../static/img/full-view.svg" alt="전체보기">
+            </button>
+          </div>
+
+          <!-- 전체 CCTV -->
+          <div id="videoGrid"
+              class="video-grid hidden">
+          </div>
+
       </div>
     </section>
 
