@@ -87,24 +87,34 @@ def add_risk_result(detection_result, in_danger_zone=False):
 def make_violation_type(detection_result):
     """
     감지 결과를 바탕으로 위반 유형을 만든다.
-    쿨다운 중복 캡처 기준으로 사용된다.
+    DB 저장 및 화면 표시용 위반명을 반환한다.
+
+    - 안전모 + 안전조끼 둘 다 미착용: PPE 미착용
+    - 안전모만 미착용: 안전모 미착용
+    - 안전조끼만 미착용: 안전조끼 미착용
+    - 위험구역 침입이 같이 있으면 뒤에 추가
     """
+
+    no_helmet = detection_result.get("no_helmet", 0) > 0
+    no_safety_vest = detection_result.get("no_safety_vest", 0) > 0
+    in_danger_zone = detection_result.get("in_danger_zone")
 
     violation_types = []
 
-    if detection_result.get("no_helmet", 0) > 0:
-        violation_types.append("NO_HELMET")
+    if no_helmet and no_safety_vest:
+        violation_types.append("PPE 미착용")
+    elif no_helmet:
+        violation_types.append("안전모 미착용")
+    elif no_safety_vest:
+        violation_types.append("안전조끼 미착용")
 
-    if detection_result.get("no_safety_vest", 0) > 0:
-        violation_types.append("NO_SAFETY_VEST")
-
-    if detection_result.get("in_danger_zone"):
-        violation_types.append("DANGER_ZONE")
+    if in_danger_zone:
+        violation_types.append("위험구역 침입")
 
     if not violation_types:
         return "NONE"
 
-    return "_".join(violation_types)
+    return " + ".join(violation_types)
 
 
 def save_capture_if_needed(capture_frame, cctv_id, detection_result):

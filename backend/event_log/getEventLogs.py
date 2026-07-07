@@ -110,12 +110,25 @@ def get_monitoring_status(cctvId=None):
         # 3. 오늘 위반 현황 집계
         violation_count_sql = text("""
             SELECT
-                SUM(CASE WHEN violation_type = '안전모 미착용' THEN 1 ELSE 0 END) AS helmet_violation,
-                SUM(CASE WHEN violation_type = '안전조끼 미착용' THEN 1 ELSE 0 END) AS vest_violation,
-                SUM(CASE WHEN violation_type = '위험구역 침입' THEN 1 ELSE 0 END) AS zone_violation
+                SUM(CASE 
+                    WHEN violation_type LIKE '%안전모 미착용%' 
+                    OR violation_type LIKE '%PPE 미착용%' 
+                    THEN 1 ELSE 0 
+                END) AS helmet_violation,
+
+                SUM(CASE 
+                    WHEN violation_type LIKE '%안전조끼 미착용%' 
+                    OR violation_type LIKE '%PPE 미착용%' 
+                    THEN 1 ELSE 0 
+                END) AS vest_violation,
+
+                SUM(CASE 
+                    WHEN violation_type LIKE '%위험구역 침입%' 
+                    THEN 1 ELSE 0 
+                END) AS zone_violation
             FROM event_log
             WHERE cctv_id = :cctv_id
-              AND DATE(detected_at) = CURDATE()
+            AND DATE(detected_at) = CURDATE()
         """)
 
         violations = conn.execute(
