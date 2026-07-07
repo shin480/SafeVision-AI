@@ -457,11 +457,6 @@ def save_event_with_capture(cctv_id, detection_result):
         helmet_status = "미착용" if detection_result.get("no_helmet", 0) > 0 else "착용"
         vest_status = "미착용" if detection_result.get("no_safety_vest", 0) > 0 else "착용"
 
-        if helmet_status == "착용" and vest_status == "착용":
-            ppe_status = "준수"
-        else:
-            ppe_status = "미준수"
-
         # 1. event_log 저장
         event_sql = text("""
             INSERT INTO event_log (
@@ -471,7 +466,6 @@ def save_event_with_capture(cctv_id, detection_result):
                 risk_level,
                 helmet_status,
                 vest_status,
-                ppe_status,
                 capture_path,
                 status
             )
@@ -482,7 +476,6 @@ def save_event_with_capture(cctv_id, detection_result):
                 :risk_level,
                 :helmet_status,
                 :vest_status,
-                :ppe_status,
                 :capture_path,
                 '미확인'
             )
@@ -495,7 +488,6 @@ def save_event_with_capture(cctv_id, detection_result):
             "risk_level": risk_level,
             "helmet_status": helmet_status,
             "vest_status": vest_status,
-            "ppe_status": ppe_status,
             "capture_path": capture_url or capture_path
         })
 
@@ -528,6 +520,7 @@ def save_event_with_capture(cctv_id, detection_result):
 
         conn.commit()
 
+        print("이벤트/캡처 저장 성공:", event_id)
         return event_id
 
     except Exception as e:

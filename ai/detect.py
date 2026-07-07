@@ -191,6 +191,7 @@ def main():
 
             annotated1 = results1[0].plot()
             detection_result1 = save_capture_if_needed(annotated1, "CCTV01", detection_result1)
+            save_event_with_capture("CCTV01", detection_result1)
 
             print("Camera 1:", detection_result1)
 
@@ -207,6 +208,7 @@ def main():
 
             annotated2 = results2[0].plot()
             detection_result2 = save_capture_if_needed(annotated2, "CCTV02", detection_result2)
+            save_event_with_capture("CCTV02", detection_result1)
 
             print("Camera 2:", detection_result2)
 
@@ -223,6 +225,7 @@ def main():
 
             annotated3 = results3[0].plot()
             detection_result3 = save_capture_if_needed(annotated3, "CCTV03", detection_result3)
+            save_event_with_capture("CCTV03", detection_result3)
 
             print("Camera 3:", detection_result3)
 
@@ -287,6 +290,7 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
             )
 
         detection_result = save_capture_if_needed(annotated, cctv_id, detection_result)
+        print("DB 저장 직전:", cctv_id, detection_result)
         save_event_with_capture(cctv_id, detection_result)
 
         latest_detection_status[cctv_id] = {
