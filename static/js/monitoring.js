@@ -98,7 +98,7 @@ function renderCctvOptions(cctvList) {
     return;
   }
 
-  cctvSelect.innerHTML = `<option value="">CCTV 선택</option>`;
+  cctvSelect.innerHTML = `<option value="">전체 CCTV</option>`;
 
   cctvList.forEach((cctv) => {
     const option = document.createElement("option");
@@ -152,7 +152,15 @@ async function loadCctvList() {
       throw new Error(result.message || "CCTV 목록 조회 실패");
     }
 
-    renderCctvOptions(result.data);
+    cctvList = result.data;
+
+    renderCctvOptions(cctvList);
+
+    // 페이지 진입 시 자동으로 전체 CCTV 표시
+    document.querySelector("#singleVideoView").classList.add("hidden");
+    document.querySelector("#videoGrid").classList.remove("hidden");
+
+    showAllCctv();
   } catch (error) {
     console.error(error);
   }
@@ -261,6 +269,26 @@ function initFullscreen() {
   });
 }
 
+function showAllCctv() {
+  const grid = document.querySelector("#videoGrid");
+
+  grid.innerHTML = "";
+
+  const activeCctvList = cctvList.slice(0, 6);
+  const count = activeCctvList.length;
+
+  grid.className = `video-grid grid-${count}`;
+
+  activeCctvList.forEach(cctv => {
+    grid.innerHTML += `
+      <div class="video-item">
+        <div class="video-title">${cctv.name}</div>
+        <img src="/api/video-feed/${cctv.id}">
+      </div>
+    `;
+  });
+}
+
 /* =========================
    초기 실행
 ========================= */
@@ -287,12 +315,17 @@ function initMonitoring() {
 
       // CCTV를 선택하지 않은 경우 화면 초기화
       if (!cctvId) {
-        updateVideoFeed("");
-        resetMonitoringView();
+        document.querySelector("#singleVideoView").classList.add("hidden");
+        document.querySelector("#videoGrid").classList.remove("hidden");
+
+        showAllCctv();
+
         return;
       }
 
       // 영상 스트리밍 시작
+      document.querySelector("#videoGrid").classList.add("hidden");
+      document.querySelector("#singleVideoView").classList.remove("hidden");
       updateVideoFeed(cctvId);
 
       // 처음에는 YOLO가 아직 최신 상태를 만들기 전일 수 있어서 약간 늦게 1회 조회
