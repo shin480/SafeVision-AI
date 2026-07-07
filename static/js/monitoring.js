@@ -197,11 +197,78 @@ function updateVideoFeed(cctvId) {
   placeholder.classList.add("hidden");
 }
 
+/* =========================
+   전체보기 처리
+========================= */
+
+function openFullscreen() {
+  const video = document.querySelector("#cctvVideo");
+  const fullscreenModal = document.querySelector("#fullscreenModal");
+  const fullscreenVideo = document.querySelector("#fullscreenVideo");
+
+  if (!video || !fullscreenModal || !fullscreenVideo) {
+    return;
+  }
+
+  if (!video.src || video.classList.contains("hidden")) {
+    alert("먼저 CCTV를 선택해주세요.");
+    return;
+  }
+
+  fullscreenVideo.src = video.src;
+  fullscreenModal.classList.add("active");
+}
+
+function closeFullscreen() {
+  const fullscreenModal = document.querySelector("#fullscreenModal");
+  const fullscreenVideo = document.querySelector("#fullscreenVideo");
+
+  if (!fullscreenModal || !fullscreenVideo) {
+    return;
+  }
+
+  fullscreenModal.classList.remove("active");
+  fullscreenVideo.removeAttribute("src");
+}
+
+function initFullscreen() {
+  const fullscreenBtn = document.querySelector("#fullscreenBtn");
+  const fullscreenModal = document.querySelector("#fullscreenModal");
+  const closeFullscreenBtn = document.querySelector("#closeFullscreenBtn");
+
+  if (fullscreenBtn) {
+    fullscreenBtn.addEventListener("click", openFullscreen);
+  }
+
+  if (closeFullscreenBtn) {
+    closeFullscreenBtn.addEventListener("click", closeFullscreen);
+  }
+
+  if (fullscreenModal) {
+    fullscreenModal.addEventListener("click", (event) => {
+      if (event.target === fullscreenModal) {
+        closeFullscreen();
+      }
+    });
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeFullscreen();
+    }
+  });
+}
+
+/* =========================
+   초기 실행
+========================= */
+
 function initMonitoring() {
   loadMonitoringSidebar();
 
   resetMonitoringView();
   loadCctvList();
+  initFullscreen();
 
   const searchBtn = document.querySelector("#searchBtn");
   const cctvSelect = document.querySelector("#cctvSelect");
