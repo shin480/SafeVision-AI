@@ -1,6 +1,5 @@
 from backend.util.db import get_engine
 from sqlalchemy import text
-import cv2
 from pathlib import Path
 
 CAMERA_MAP = {
@@ -204,16 +203,19 @@ def get_dashboard_data():
         ppe_rate = round(float(ppe_rate), 1) if ppe_rate is not None else 0
 
         # CCTV 연결 상태
-        total_cctv = len(CAMERA_MAP)
-        connected_cctv = 0
+        # 현재는 실제 카메라 장치 연결 여부가 아니라
+        # DB에 등록된 CCTV 중 사용중(is_active=1)인 CCTV 수를 기준으로 계산
+        cctv_sql = text("""
+            SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS connected
+            FROM cctv
+        """)
 
-        for camera_index in CAMERA_MAP.values():
-            cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
+        cctv_result = conn.execute(cctv_sql).mappings().first()
 
-            if cap.isOpened():
-                connected_cctv += 1
-
-            cap.release()
+        total_cctv = int(cctv_result["total"] or 0)
+        connected_cctv = int(cctv_result["connected"] or 0)
 
         # 오늘 최고 위험도
         overall_sql = text("""
@@ -273,7 +275,13 @@ def get_dashboard_data():
             "cctv": {
                 "connected": connected_cctv,
                 "total": total_cctv,
-                "text": "정상 연결" if connected_cctv == total_cctv else "일부 연결 안 됨"
+                "text": (
+                    "모든 CCTV 사용중"
+                    if connected_cctv == total_cctv and total_cctv > 0
+                    else "등록된 CCTV 없음"
+                    if total_cctv == 0
+                    else "일부 CCTV 미사용"
+                )
             },
             "recentEvents": [dict(row) for row in recent_events]
         }
@@ -449,11 +457,6 @@ def save_event_with_capture(cctv_id, detection_result):
         helmet_status = "미착용" if detection_result.get("no_helmet", 0) > 0 else "착용"
         vest_status = "미착용" if detection_result.get("no_safety_vest", 0) > 0 else "착용"
 
-        if helmet_status == "착용" and vest_status == "착용":
-            ppe_status = "준수"
-        else:
-            ppe_status = "미준수"
-
         # 1. event_log 저장
         event_sql = text("""
             INSERT INTO event_log (
@@ -463,7 +466,6 @@ def save_event_with_capture(cctv_id, detection_result):
                 risk_level,
                 helmet_status,
                 vest_status,
-                ppe_status,
                 capture_path,
                 status
             )
@@ -474,7 +476,6 @@ def save_event_with_capture(cctv_id, detection_result):
                 :risk_level,
                 :helmet_status,
                 :vest_status,
-                :ppe_status,
                 :capture_path,
                 '미확인'
             )
@@ -487,7 +488,6 @@ def save_event_with_capture(cctv_id, detection_result):
             "risk_level": risk_level,
             "helmet_status": helmet_status,
             "vest_status": vest_status,
-            "ppe_status": ppe_status,
             "capture_path": capture_url or capture_path
         })
 
@@ -520,6 +520,7 @@ def save_event_with_capture(cctv_id, detection_result):
 
         conn.commit()
 
+        print("이벤트/캡처 저장 성공:", event_id)
         return event_id
 
     except Exception as e:

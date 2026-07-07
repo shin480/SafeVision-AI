@@ -6,6 +6,9 @@ from ai.risk import calculate_risk
 from ai.capture import get_capture_path_if_needed
 from backend.event_log.getEventLogs import save_event_with_capture
 
+from sqlalchemy import text
+from backend.util.db import get_engine
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
 
@@ -46,6 +49,23 @@ def extract_detection_result(results, model):
     }
 
     return detection_result
+
+def get_danger_zones(cctv_id):
+    db = get_engine()
+
+    try:
+        sql = text("""
+            SELECT zone_id, zone_name, x1, y1, x2, y2
+            FROM danger_zone
+            WHERE cctv_id = :cctv_id
+              AND is_active = 1
+        """)
+
+        rows = db.execute(sql, {"cctv_id": cctv_id}).mappings().all()
+        return [dict(row) for row in rows]
+
+    finally:
+        db.close()
 
 # 감지 결과를 바탕으로 위험도 점수와 상태를 추가하는 함수 - 나중에 위험구역 기능을 붙이면 됨
 def add_risk_result(detection_result, in_danger_zone=False):
@@ -171,6 +191,7 @@ def main():
 
             annotated1 = results1[0].plot()
             detection_result1 = save_capture_if_needed(annotated1, "CCTV01", detection_result1)
+            save_event_with_capture("CCTV01", detection_result1)
 
             print("Camera 1:", detection_result1)
 
@@ -187,6 +208,7 @@ def main():
 
             annotated2 = results2[0].plot()
             detection_result2 = save_capture_if_needed(annotated2, "CCTV02", detection_result2)
+            save_event_with_capture("CCTV02", detection_result1)
 
             print("Camera 2:", detection_result2)
 
@@ -203,6 +225,7 @@ def main():
 
             annotated3 = results3[0].plot()
             detection_result3 = save_capture_if_needed(annotated3, "CCTV03", detection_result3)
+            save_event_with_capture("CCTV03", detection_result3)
 
             print("Camera 3:", detection_result3)
 
@@ -241,7 +264,33 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
         detection_result = add_risk_result(detection_result)
 
         annotated = results[0].plot()
+
+        danger_zones = get_danger_zones(cctv_id)
+
+        print("현재 CCTV ID:", cctv_id)
+        print("위험구역 조회 결과:", danger_zones)
+
+        for zone in danger_zones:
+            cv2.rectangle(
+                annotated,
+                (zone["x1"], zone["y1"]),
+                (zone["x2"], zone["y2"]),
+                (0, 0, 255),
+                3
+            )
+
+            cv2.putText(
+                annotated,
+                zone["zone_name"],
+                (zone["x1"], zone["y1"] - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (0, 0, 255),
+                2
+            )
+
         detection_result = save_capture_if_needed(annotated, cctv_id, detection_result)
+        print("DB 저장 직전:", cctv_id, detection_result)
         save_event_with_capture(cctv_id, detection_result)
 
         latest_detection_status[cctv_id] = {
