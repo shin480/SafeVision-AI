@@ -6,7 +6,12 @@ from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 
-from backend.event_log.getEventLogs import get_event_logs, get_monitoring_status, get_dashboard_data
+from backend.event_log.getEventLogs import (
+    get_event_logs,
+    get_monitoring_status,
+    get_dashboard_data,
+    get_statistics_data
+)
 
 from ai.detect import generate_frames
 
@@ -263,7 +268,7 @@ def video_feed(cctv_id: str):
     )
 
 
-@app.get("/api/monitoring/status") # 모니터링 상태 (임시 더미 데이터)
+@app.get("/api/monitoring/status")
 def monitoring_status(cctvId: str):
 
     data = get_monitoring_status(cctvId)
@@ -293,3 +298,13 @@ def events(
 @app.get("/api/dashboard")
 def dashboard_data():
     return get_dashboard_data()
+
+# -----------------------------
+# statistics
+# -----------------------------
+@app.get("/api/statistics")
+def statistics_data(
+    start_date: str = None,
+    end_date: str = None
+):
+    return get_statistics_data(start_date, end_date)

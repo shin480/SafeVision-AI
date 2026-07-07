@@ -306,3 +306,125 @@ def get_dashboard_data():
     finally:
         if conn:
             conn.close()
+
+# 통계 분석
+def get_statistics_data(start_date=None, end_date=None):
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        where = "WHERE 1=1"
+        params = {}
+
+        if start_date:
+            where += " AND DATE(detected_at) >= :start_date"
+            params["start_date"] = start_date
+
+        if end_date:
+            where += " AND DATE(detected_at) <= :end_date"
+            params["end_date"] = end_date
+
+        # 1. 요약
+        summary_sql = text(f"""
+            SELECT
+                COUNT(*) AS warning_count,
+                AVG(risk_score) AS avg_risk_score
+            FROM event_log
+            {where}
+        """)
+
+        summary = conn.execute(summary_sql, params).mappings().first()
+
+        # 2. 전체 감지 건수 / PPE 착용률
+        detection_where = "WHERE 1=1"
+        detection_params = {}
+
+        if start_date:
+            detection_where += " AND DATE(detected_at) >= :start_date"
+            detection_params["start_date"] = start_date
+
+        if end_date:
+            detection_where += " AND DATE(detected_at) <= :end_date"
+            detection_params["end_date"] = end_date
+
+        detection_sql = text(f"""
+            SELECT
+                COUNT(*) AS total_count,
+                AVG(ppe_wear_rate) AS avg_ppe_rate
+            FROM detection_log
+            {detection_where}
+        """)
+
+        detection = conn.execute(detection_sql, detection_params).mappings().first()
+
+        # 3. 시간대별 경고 횟수
+        hourly_sql = text(f"""
+            SELECT
+                HOUR(detected_at) AS hour,
+                COUNT(*) AS count
+            FROM event_log
+            {where}
+            GROUP BY HOUR(detected_at)
+            ORDER BY hour
+        """)
+
+        hourly_rows = conn.execute(hourly_sql, params).mappings().all()
+
+        # 4. 위반 유형별 비율
+        type_sql = text(f"""
+            SELECT
+                violation_type AS type,
+                COUNT(*) AS count
+            FROM event_log
+            {where}
+            GROUP BY violation_type
+        """)
+
+        type_rows = conn.execute(type_sql, params).mappings().all()
+
+        total_warning = int(summary["warning_count"] or 0)
+
+        violation_types = []
+        for row in type_rows:
+            count = int(row["count"] or 0)
+            rate = round((count / total_warning) * 100, 1) if total_warning > 0 else 0
+
+            violation_types.append({
+                "type": row["type"],
+                "rate": rate
+            })
+
+        return {
+            "summary": {
+                "totalCount": int(detection["total_count"] or 0),
+                "warningCount": total_warning,
+                "ppeRate": round(float(detection["avg_ppe_rate"] or 0), 1),
+                "riskScore": round(float(summary["avg_risk_score"] or 0), 1)
+            },
+            "hourlyWarnings": [
+                {
+                    "time": f"{int(row['hour']):02d}시",
+                    "count": int(row["count"])
+                }
+                for row in hourly_rows
+            ],
+            "violationTypes": violation_types
+        }
+
+    except Exception as e:
+        print("통계 조회 오류:", e)
+        return {
+            "summary": {
+                "totalCount": 0,
+                "warningCount": 0,
+                "ppeRate": 0,
+                "riskScore": 0
+            },
+            "hourlyWarnings": [],
+            "violationTypes": []
+        }
+
+    finally:
+        if conn:
+            conn.close()

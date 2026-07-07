@@ -23,7 +23,11 @@ async function loadStatistics() {
   // const response = await fetch(`/api/statistics?start=${startDate}&end=${endDate}`);
   // const data = await response.json();
 
-  const data = await getStatisticsData(startDate, endDate);
+  const response = await fetch(
+    `/api/statistics?start_date=${startDate}&end_date=${endDate}`
+  );
+
+  const data = await response.json();
 
   renderSummary(data.summary);
   renderHourlyChart(data.hourlyWarnings);

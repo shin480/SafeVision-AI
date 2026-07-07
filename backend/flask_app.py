@@ -148,6 +148,21 @@ def dashboard_data():
     response = requests.get(f"{FASTAPI_URL}/api/dashboard")
     return jsonify(response.json())
 
+# ----------------
+# 통계 분석
+# ----------------
+@app.route("/api/statistics")
+def statistics_data():
+    response = requests.get(
+        f"{FASTAPI_URL}/api/statistics",
+        params={
+            "start_date": request.args.get("start_date"),
+            "end_date": request.args.get("end_date")
+        }
+    )
+
+    return jsonify(response.json())
+
 # db 연결 테스트 
 @app.route("/db")
 def db():
