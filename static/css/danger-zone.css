@@ -37,11 +37,12 @@
 }
 
 .zone-toolbar select {
-  width: 250px;
   height: 36px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   padding: 0 34px 0 12px;
+  font-size: 14px;
+  font-weight: 700;
 
   appearance: none;
   -webkit-appearance: none;
@@ -50,7 +51,7 @@
   background-color: #ffffff;
   background-image: url("../img/select-arrow.svg");
   background-repeat: no-repeat;
-  background-position: right 18px center;
+  background-position: right 10px center;
   background-size: 12px 8px;
 }
 
@@ -232,9 +233,13 @@
   border-radius: 5px;
   background: #eaf8ef;
   color: #008b42;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   line-height: 1.45;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .zone-actions {
