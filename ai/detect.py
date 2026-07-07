@@ -67,6 +67,36 @@ def get_danger_zones(cctv_id):
     finally:
         db.close()
 
+def check_danger_zone_intrusion(results, model, danger_zones):
+    boxes = results[0].boxes
+
+    if boxes is None or len(boxes) == 0:
+        return False
+
+    for box in boxes:
+        cls_id = int(box.cls[0])
+        class_name = model.names[cls_id]
+
+        if class_name != "person":
+            continue
+
+        x1, y1, x2, y2 = box.xyxy[0]
+        x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
+
+        cx = (x1 + x2) // 2
+        cy = (y1 + y2) // 2
+
+        for zone in danger_zones:
+            zx1 = min(zone["x1"], zone["x2"])
+            zy1 = min(zone["y1"], zone["y2"])
+            zx2 = max(zone["x1"], zone["x2"])
+            zy2 = max(zone["y1"], zone["y2"])
+
+            if zx1 <= cx <= zx2 and zy1 <= cy <= zy2:
+                return True
+
+    return False
+
 # 감지 결과를 바탕으로 위험도 점수와 상태를 추가하는 함수 - 나중에 위험구역 기능을 붙이면 됨
 def add_risk_result(detection_result, in_danger_zone=False):
     no_helmet = detection_result["no_helmet"] > 0
@@ -257,15 +287,20 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
 
         results = model(frame, conf=conf)
 
+        danger_zones = get_danger_zones(cctv_id)
+        in_danger_zone = check_danger_zone_intrusion(results, model, danger_zones)
+
         detection_result = extract_detection_result(results, model)
-        detection_result = add_risk_result(detection_result)
+        detection_result = add_risk_result(
+            detection_result,
+            in_danger_zone=in_danger_zone
+        )
 
         annotated = results[0].plot()
 
-        danger_zones = get_danger_zones(cctv_id)
-
         print("현재 CCTV ID:", cctv_id)
         print("위험구역 조회 결과:", danger_zones)
+        print("위험구역 침입 여부:", in_danger_zone)
 
         for zone in danger_zones:
             cv2.rectangle(
