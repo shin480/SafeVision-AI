@@ -1,6 +1,7 @@
 from backend.util.db import get_engine
 from sqlalchemy import text
 import cv2
+from pathlib import Path
 
 CAMERA_MAP = {
             "cctv01": 0,
@@ -424,6 +425,110 @@ def get_statistics_data(start_date=None, end_date=None):
             "hourlyWarnings": [],
             "violationTypes": []
         }
+
+    finally:
+        if conn:
+            conn.close()
+
+def save_event_with_capture(cctv_id, detection_result):
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        capture_path = detection_result.get("capture_path")
+        capture_url = detection_result.get("capture_url")
+        violation_type = detection_result.get("violation_type", "NONE")
+        risk_score = detection_result.get("risk_score", 0)
+        risk_level = detection_result.get("risk_status", "SAFE")
+
+        # 캡처가 실제로 저장된 경우에만 DB 저장
+        if not capture_path or violation_type == "NONE":
+            return None
+
+        helmet_status = "미착용" if detection_result.get("no_helmet", 0) > 0 else "착용"
+        vest_status = "미착용" if detection_result.get("no_safety_vest", 0) > 0 else "착용"
+
+        if helmet_status == "착용" and vest_status == "착용":
+            ppe_status = "준수"
+        else:
+            ppe_status = "미준수"
+
+        # 1. event_log 저장
+        event_sql = text("""
+            INSERT INTO event_log (
+                cctv_id,
+                violation_type,
+                risk_score,
+                risk_level,
+                helmet_status,
+                vest_status,
+                ppe_status,
+                capture_path,
+                status
+            )
+            VALUES (
+                :cctv_id,
+                :violation_type,
+                :risk_score,
+                :risk_level,
+                :helmet_status,
+                :vest_status,
+                :ppe_status,
+                :capture_path,
+                '미확인'
+            )
+        """)
+
+        result = conn.execute(event_sql, {
+            "cctv_id": cctv_id,
+            "violation_type": violation_type,
+            "risk_score": risk_score,
+            "risk_level": risk_level,
+            "helmet_status": helmet_status,
+            "vest_status": vest_status,
+            "ppe_status": ppe_status,
+            "capture_path": capture_url or capture_path
+        })
+
+        event_id = result.lastrowid
+
+        # 2. capture_image 저장
+        file_name = Path(capture_path).name
+
+        capture_sql = text("""
+            INSERT INTO capture_image (
+                event_id,
+                cctv_id,
+                file_name,
+                file_path
+            )
+            VALUES (
+                :event_id,
+                :cctv_id,
+                :file_name,
+                :file_path
+            )
+        """)
+
+        conn.execute(capture_sql, {
+            "event_id": event_id,
+            "cctv_id": cctv_id,
+            "file_name": file_name,
+            "file_path": capture_url or capture_path
+        })
+
+        conn.commit()
+
+        return event_id
+
+    except Exception as e:
+        print("이벤트/캡처 저장 오류:", e)
+
+        if conn:
+            conn.rollback()
+
+        return None
 
     finally:
         if conn:

@@ -4,6 +4,7 @@ import cv2
 from collections import Counter
 from ai.risk import calculate_risk
 from ai.capture import get_capture_path_if_needed
+from backend.event_log.getEventLogs import save_event_with_capture
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
@@ -241,6 +242,7 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
 
         annotated = results[0].plot()
         detection_result = save_capture_if_needed(annotated, cctv_id, detection_result)
+        save_event_with_capture(cctv_id, detection_result)
 
         latest_detection_status[cctv_id] = {
             "riskLevel": detection_result.get("risk_status", "-"),
