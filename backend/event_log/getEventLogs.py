@@ -123,7 +123,7 @@ def get_monitoring_status(cctvId=None):
                 END) AS vest_violation,
 
                 SUM(CASE 
-                    WHEN violation_type LIKE '%위험구역 침입%' 
+                    WHEN violation_type LIKE '%위험구역 진입%' 
                     THEN 1 ELSE 0 
                 END) AS zone_violation
             FROM event_log

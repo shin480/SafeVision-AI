@@ -63,7 +63,7 @@ def check_danger_zone_violation(bbox, danger_zone):
 
 def create_danger_zone_event(camera_id, bbox, danger_zone):
     """
-    위험구역 침입 이벤트 생성
+    위험구역 진입 이벤트 생성
     DB 저장 전 임시 이벤트 데이터
     """
 
@@ -73,7 +73,7 @@ def create_danger_zone_event(camera_id, bbox, danger_zone):
         "camera_id": camera_id,
         "event_type": "DANGER_ZONE",
         "severity": "WARNING",
-        "message": "위험구역 침입 감지",
+        "message": "위험구역 진입 감지",
         "bbox": {
             "x1": bbox[0],
             "y1": bbox[1],
@@ -92,8 +92,8 @@ def create_danger_zone_event(camera_id, bbox, danger_zone):
 
 def check_and_create_event(camera_id, bbox, danger_zone):
     """
-    침입 여부 판단 후, 침입이면 이벤트 생성
-    침입 아니면 None 반환
+    진입 여부 판단 후, 진입이면 이벤트 생성
+    진입 아니면 None 반환
     """
 
     if check_danger_zone_violation(bbox, danger_zone):
