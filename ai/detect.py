@@ -5,6 +5,7 @@ from collections import Counter
 import time
 
 from ai.risk import calculate_risk
+from ai.modelcombined import PPECombinedModel
 from ai.capture import get_capture_path_if_needed
 from backend.event_log.getEventLogs import save_event_with_capture, save_detection_log
 
@@ -13,10 +14,18 @@ from backend.util.db import get_engine
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
+# MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
 
 # YOLO 모델 한 번만 로드
-model = YOLO(str(MODEL_PATH))
+# model = YOLO(str(MODEL_PATH))
+model = PPECombinedModel( # 최종 모델
+    pose_model_path="yolov8n-pose.pt",
+    helmet_cls_path=r"runs\classify\helmet_cls\weights\best.pt",
+    vest_cls_path=r"runs\classify\vest_cls\weights\best.pt",
+    person_conf=0.25,
+    device="cpu"
+)
+
 
 # 실시간 모니터링 화면에 보여줄 최신 감지 상태 저장
 latest_detection_status = {}
@@ -27,35 +36,30 @@ last_detection_log_time = {}
 
 
 # YOLO 감지 결과를 JSON 형태로 정리하는 함수
-def extract_detection_result(results, model):
-    boxes = results[0].boxes
-
-    # 감지된 객체가 없을 때 기본값 반환
-    if boxes is None or len(boxes) == 0:
-        return {
-            "person": 0,
-            "helmet": 0,
-            "no_helmet": 0,
-            "safety_vest": 0,
-            "no_safety_vest": 0
-        }
-
-    # 감지된 클래스 ID 추출
-    class_ids = boxes.cls.tolist()
-
-    # 클래스 ID를 클래스명으로 변환
-    class_names = [model.names[int(cls_id)] for cls_id in class_ids]
-
-    # 클래스별 개수 계산
-    counts = Counter(class_names)
-
-    return {
-        "person": counts.get("person", 0),
-        "helmet": counts.get("helmet", 0),
-        "no_helmet": counts.get("no_helmet", 0),
-        "safety_vest": counts.get("safety_vest", 0),
-        "no_safety_vest": counts.get("no_safety_vest", 0)
+def extract_detection_result(detections):
+    detection_result = {
+        "person": len(detections),
+        "helmet": 0,
+        "no_helmet": 0,
+        "safety_vest": 0,
+        "no_safety_vest": 0
     }
+
+    for det in detections:
+        helmet_status = det.get("helmet_status")
+        vest_status = det.get("vest_status")
+
+        if helmet_status == "helmet":
+            detection_result["helmet"] += 1
+        else:
+            detection_result["no_helmet"] += 1
+
+        if vest_status == "safety_vest":
+            detection_result["safety_vest"] += 1
+        else:
+            detection_result["no_safety_vest"] += 1
+
+    return detection_result
 
 
 # CCTV별 저장된 위험구역 좌표 조회
@@ -78,31 +82,13 @@ def get_danger_zones(cctv_id):
 
 
 # 감지된 객체의 중심점이 위험구역 안에 들어왔는지 확인
-def check_danger_zone_intrusion(results, model, danger_zones):
-    boxes = results[0].boxes
-
-    if boxes is None or len(boxes) == 0:
+def check_danger_zone_intrusion(detections, danger_zones):
+    if not detections:
         return False
 
-    target_classes = [
-        "person",
-        "helmet",
-        "no_helmet",
-        "safety_vest",
-        "no_safety_vest"
-    ]
+    for det in detections:
+        x1, y1, x2, y2 = det["bbox"]
 
-    for box in boxes:
-        cls_id = int(box.cls[0])
-        class_name = model.names[cls_id]
-
-        if class_name not in target_classes:
-            continue
-
-        x1, y1, x2, y2 = box.xyxy[0]
-        x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
-
-        # 감지 박스의 중심점 계산
         cx = (x1 + x2) // 2
         cy = (y1 + y2) // 2
 
@@ -214,21 +200,18 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
             break
 
         # YOLO 객체 감지 수행
-        results = model(frame, conf=conf)
+        detections = model.predict(frame)
 
-        # 저장된 위험구역 조회 후 진입 여부 판단
         danger_zones = get_danger_zones(cctv_id)
-        in_danger_zone = check_danger_zone_intrusion(results, model, danger_zones)
+        in_danger_zone = check_danger_zone_intrusion(detections, danger_zones)
 
-        # 감지 결과 정리 + 위험도 계산
-        detection_result = extract_detection_result(results, model)
+        detection_result = extract_detection_result(detections)
         detection_result = add_risk_result(
             detection_result,
             in_danger_zone=in_danger_zone
         )
 
-        # YOLO 박스가 표시된 프레임 생성
-        annotated = results[0].plot()
+        annotated = model.draw(frame, detections)
 
         print("현재 CCTV ID:", cctv_id)
         print("위험구역 조회 결과:", danger_zones)
