@@ -306,29 +306,37 @@ class PPECombinedModel:
             crop_source = det.get("crop_source", "")
 
             # person box - green
-            cv2.rectangle(output, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.rectangle(output, (x1, y1), (x2, y2), (255, 0, 0), 2)
             cv2.putText(
                 output,
                 f"person {person_conf:.2f} [{crop_source}]",
                 (x1, max(20, y1 - 10)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.55,
-                (0, 255, 0),
+                (255, 0, 0),
                 2,
                 cv2.LINE_AA,
             )
 
-            # head box - blue
+            # head box - green or red
             if head_box is not None:
                 hx1, hy1, hx2, hy2 = map(int, head_box)
-                cv2.rectangle(output, (hx1, hy1), (hx2, hy2), (255, 0, 0), 2)
+
+                # 착용 여부에 따라 색 변경
+                if helmet == "helmet":          # <- 클래스명이 다르면 수정
+                    helmet_color = (0, 255, 0)  # 녹색
+                else:
+                    helmet_color = (0, 0, 255)  # 빨간색
+
+                cv2.rectangle(output, (hx1, hy1), (hx2, hy2), helmet_color, 2)
+
                 cv2.putText(
                     output,
                     f"{helmet} {helmet_conf:.2f}",
                     (hx1, max(20, hy1 - 8)),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5,
-                    (255, 0, 0),
+                    helmet_color,
                     2,
                     cv2.LINE_AA,
                 )
@@ -336,14 +344,21 @@ class PPECombinedModel:
             # torso box - orange
             if torso_box is not None:
                 tx1, ty1, tx2, ty2 = map(int, torso_box)
-                cv2.rectangle(output, (tx1, ty1), (tx2, ty2), (0, 165, 255), 2)
+
+                if vest == "safety_vest":              # <- 클래스명에 맞게 수정
+                    vest_color = (0, 255, 0)
+                else:
+                    vest_color = (0, 0, 255)
+
+                cv2.rectangle(output, (tx1, ty1), (tx2, ty2), vest_color, 2)
+
                 cv2.putText(
                     output,
                     f"{vest} {vest_conf:.2f}",
                     (tx1, max(20, ty1 - 8)),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5,
-                    (0, 165, 255),
+                    vest_color,
                     2,
                     cv2.LINE_AA,
                 )
