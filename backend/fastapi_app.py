@@ -494,8 +494,8 @@ def get_danger_zone_list():
             conn.close()
 
 
-@app.delete("/api/danger-zone/{cctv_id}")
-def delete_danger_zone(cctv_id: str):
+@app.delete("/api/danger-zone/zone/{zone_id}")
+def delete_danger_zone_by_id(zone_id: int):
     conn = None
 
     try:
@@ -504,27 +504,33 @@ def delete_danger_zone(cctv_id: str):
         sql = text("""
             UPDATE danger_zone
             SET is_active = 0
-            WHERE cctv_id = :cctv_id
+            WHERE zone_id = :zone_id
               AND is_active = 1
         """)
 
-        conn.execute(sql, {"cctv_id": cctv_id})
+        result = conn.execute(sql, {"zone_id": zone_id})
         conn.commit()
+
+        if result.rowcount == 0:
+            return {
+                "success": False,
+                "message": "삭제할 위험구역이 없습니다."
+            }
 
         return {
             "success": True,
-            "message": "위험구역이 초기화되었습니다."
+            "message": "위험구역이 삭제되었습니다."
         }
 
     except Exception as e:
-        print("위험구역 초기화 오류:", e)
+        print("위험구역 삭제 오류:", e)
 
         if conn:
             conn.rollback()
 
         return {
             "success": False,
-            "message": "위험구역 초기화 실패"
+            "message": "위험구역 삭제 실패"
         }
 
     finally:

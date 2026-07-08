@@ -191,7 +191,9 @@ def get_danger_zones():
 
 @app.route("/api/danger-zone/<int:zone_id>", methods=["DELETE"])
 def delete_danger_zone(zone_id):
-    response = requests.delete(f"{FASTAPI_URL}/api/danger-zone/{zone_id}")
+    response = requests.delete(
+        f"{FASTAPI_URL}/api/danger-zone/zone/{zone_id}"
+    )
     return jsonify(response.json())
 
 if __name__ == "__main__":
