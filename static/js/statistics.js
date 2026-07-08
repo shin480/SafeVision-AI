@@ -1,6 +1,7 @@
 let hourlyChart = null;
 let typeChart = null;
 
+// 공통 사이드바를 불러오고 현재 페이지 메뉴를 활성화
 fetch("/sidebar")
   .then((res) => res.text())
   .then((html) => {
@@ -15,51 +16,38 @@ fetch("/sidebar")
     });
   });
 
+// 통계 API를 호출해서 요약 카드와 차트 데이터를 화면에 표시
 async function loadStatistics() {
   const startDate = document.getElementById("startDate").value;
   const endDate = document.getElementById("endDate").value;
 
-  // Flask 연결 시 이 부분만 바꾸면 됨
-  // const response = await fetch(`/api/statistics?start=${startDate}&end=${endDate}`);
-  // const data = await response.json();
+  try {
+    const response = await fetch(
+      `/api/statistics?start_date=${startDate}&end_date=${endDate}`
+    );
 
-  const response = await fetch(
-    `/api/statistics?start_date=${startDate}&end_date=${endDate}`
-  );
+    const data = await response.json();
 
-  const data = await response.json();
+    renderSummary(data.summary);
+    renderHourlyChart(data.hourlyWarnings);
+    renderTypeChart(data.violationTypes);
+  } catch (error) {
+    console.error("통계 데이터 조회 실패:", error);
 
-  renderSummary(data.summary);
-  renderHourlyChart(data.hourlyWarnings);
-  renderTypeChart(data.violationTypes);
+    // 조회 실패 시 기본값으로 화면 초기화
+    renderSummary({
+      totalCount: 0,
+      warningCount: 0,
+      ppeRate: 0,
+      riskScore: 0
+    });
+
+    renderHourlyChart([]);
+    renderTypeChart([]);
+  }
 }
 
-async function getStatisticsData(startDate, endDate) {
-  return {
-    summary: {
-      totalCount: 1234,
-      warningCount: 35,
-      ppeRate: 92.3,
-      riskScore: 32.5
-    },
-    hourlyWarnings: [
-      { time: "09시", count: 3 },
-      { time: "10시", count: 6 },
-      { time: "11시", count: 4 },
-      { time: "12시", count: 9 },
-      { time: "13시", count: 7 },
-      { time: "14시", count: 11 },
-      { time: "15시", count: 5 }
-    ],
-    violationTypes: [
-      { type: "안전모 미착용", rate: 45 },
-      { type: "안전조끼 미착용", rate: 25 },
-      { type: "위험구역 출입", rate: 20 },
-      { type: "기타", rate: 10 }
-    ]
-  };
-}
-
+// 상단 요약 카드에 감지 횟수, 위험 건수, PPE 착용률, 위험 점수 표시
 function renderSummary(summary) {
   document.getElementById("totalCount").textContent =
     `${summary.totalCount.toLocaleString()} 건`;
@@ -74,12 +62,14 @@ function renderSummary(summary) {
     `${summary.riskScore} 점`;
 }
 
+// 시간대별 위험 이벤트 데이터를 선 그래프로 표시
 function renderHourlyChart(hourlyData) {
   const labels = hourlyData.map((item) => item.time);
   const counts = hourlyData.map((item) => item.count);
 
   const ctx = document.getElementById("hourlyChart");
 
+  // 기존 차트가 있으면 제거 후 다시 그림
   if (hourlyChart) {
     hourlyChart.destroy();
   }
@@ -90,7 +80,7 @@ function renderHourlyChart(hourlyData) {
       labels: labels,
       datasets: [
         {
-          label: "경고 횟수",
+          label: "위험 이벤트",
           data: counts,
 
           borderColor: "#08a64b",
@@ -128,6 +118,7 @@ function renderHourlyChart(hourlyData) {
   });
 }
 
+// 위험 유형별 비율 데이터를 도넛 차트로 표시
 function renderTypeChart(typeData) {
   const labels = typeData.map((item) => item.type);
   const rates = typeData.map((item) => item.rate);
@@ -135,6 +126,7 @@ function renderTypeChart(typeData) {
 
   const ctx = document.getElementById("typeChart");
 
+  // 기존 차트가 있으면 제거 후 다시 그림
   if (typeChart) {
     typeChart.destroy();
   }
@@ -164,6 +156,7 @@ function renderTypeChart(typeData) {
   renderLegend(typeData, colors);
 }
 
+// 도넛 차트 옆에 위험 유형별 범례 표시
 function renderLegend(typeData, colors) {
   const legend = document.getElementById("typeLegend");
   legend.innerHTML = "";
@@ -180,6 +173,8 @@ function renderLegend(typeData, colors) {
   });
 }
 
+// 검색 버튼 클릭 시 선택한 기간 기준으로 통계 다시 조회
 document.getElementById("searchBtn").addEventListener("click", loadStatistics);
 
+// 페이지 진입 시 통계 데이터 최초 조회
 loadStatistics();

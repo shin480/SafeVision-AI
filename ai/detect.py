@@ -2,25 +2,35 @@ from pathlib import Path
 from ultralytics import YOLO
 import cv2
 from collections import Counter
+import time
+
 from ai.risk import calculate_risk
 from ai.capture import get_capture_path_if_needed
-from backend.event_log.getEventLogs import save_event_with_capture
+from backend.event_log.getEventLogs import save_event_with_capture, save_detection_log
 
 from sqlalchemy import text
 from backend.util.db import get_engine
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
 
 # YOLO 모델 한 번만 로드
 model = YOLO(str(MODEL_PATH))
+
+# 실시간 모니터링 화면에 보여줄 최신 감지 상태 저장
 latest_detection_status = {}
+
+# detection_log가 프레임마다 과도하게 쌓이지 않도록 저장 간격 제한
+DETECTION_LOG_COOLDOWN = 5
+last_detection_log_time = {}
+
 
 # YOLO 감지 결과를 JSON 형태로 정리하는 함수
 def extract_detection_result(results, model):
     boxes = results[0].boxes
 
-    # 감지된 객체가 없을 때
+    # 감지된 객체가 없을 때 기본값 반환
     if boxes is None or len(boxes) == 0:
         return {
             "person": 0,
@@ -39,8 +49,7 @@ def extract_detection_result(results, model):
     # 클래스별 개수 계산
     counts = Counter(class_names)
 
-    # 프론트/백엔드로 넘기기 좋은 JSON 형태
-    detection_result = {
+    return {
         "person": counts.get("person", 0),
         "helmet": counts.get("helmet", 0),
         "no_helmet": counts.get("no_helmet", 0),
@@ -48,8 +57,8 @@ def extract_detection_result(results, model):
         "no_safety_vest": counts.get("no_safety_vest", 0)
     }
 
-    return detection_result
 
+# CCTV별 저장된 위험구역 좌표 조회
 def get_danger_zones(cctv_id):
     db = get_engine()
 
@@ -67,6 +76,8 @@ def get_danger_zones(cctv_id):
     finally:
         db.close()
 
+
+# 감지된 객체의 중심점이 위험구역 안에 들어왔는지 확인
 def check_danger_zone_intrusion(results, model, danger_zones):
     boxes = results[0].boxes
 
@@ -91,6 +102,7 @@ def check_danger_zone_intrusion(results, model, danger_zones):
         x1, y1, x2, y2 = box.xyxy[0]
         x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
 
+        # 감지 박스의 중심점 계산
         cx = (x1 + x2) // 2
         cy = (y1 + y2) // 2
 
@@ -105,7 +117,8 @@ def check_danger_zone_intrusion(results, model, danger_zones):
 
     return False
 
-# 감지 결과를 바탕으로 위험도 점수와 상태를 추가하는 함수 - 나중에 위험구역 기능을 붙이면 됨
+
+# 감지 결과를 바탕으로 위험도 점수와 등급 추가
 def add_risk_result(detection_result, in_danger_zone=False):
     no_helmet = detection_result["no_helmet"] > 0
     no_safety_vest = detection_result["no_safety_vest"] > 0
@@ -122,17 +135,9 @@ def add_risk_result(detection_result, in_danger_zone=False):
 
     return detection_result
 
+
+# 감지 결과를 DB와 화면에 표시할 위반 유형 문자열로 변환
 def make_violation_type(detection_result):
-    """
-    감지 결과를 바탕으로 위반 유형을 만든다.
-    DB 저장 및 화면 표시용 위반명을 반환한다.
-
-    - 안전모 + 안전조끼 둘 다 미착용: PPE 미착용
-    - 안전모만 미착용: 안전모 미착용
-    - 안전조끼만 미착용: 안전조끼 미착용
-    - 위험구역 진입이 같이 있으면 뒤에 추가
-    """
-
     no_helmet = detection_result.get("no_helmet", 0) > 0
     no_safety_vest = detection_result.get("no_safety_vest", 0) > 0
     in_danger_zone = detection_result.get("in_danger_zone")
@@ -155,12 +160,8 @@ def make_violation_type(detection_result):
     return " + ".join(violation_types)
 
 
+# 위험도 결과에 따라 캡처 이미지를 저장하고 경로 정보를 detection_result에 추가
 def save_capture_if_needed(capture_frame, cctv_id, detection_result):
-    """
-    위험도 결과에 따라 캡처 이미지를 저장한다.
-    실제 캡처는 위험구역 설정이 아니라 실시간 감지 결과 기준으로 수행된다.
-    """
-
     risk_status = detection_result["risk_status"]
     violation_type = make_violation_type(detection_result)
 
@@ -176,7 +177,7 @@ def save_capture_if_needed(capture_frame, cctv_id, detection_result):
         # 백엔드 저장 경로
         detection_result["capture_path"] = capture_path
 
-        # 프론트에서 이미지 src로 쓰기 좋은 경로
+        # 프론트 이미지 src에서 사용할 경로
         detection_result["capture_url"] = "/" + capture_path.replace("\\", "/")
     else:
         detection_result["capture_path"] = None
@@ -186,115 +187,21 @@ def save_capture_if_needed(capture_frame, cctv_id, detection_result):
 
     return detection_result
 
-# 파일을 실행하면 바로 실행할 테스트용 코드
-def main():
-    # ===============================
-    # 1. 카메라 3대 연결
-    # ===============================
-    # 보통 0, 1, 2 순서로 잡힘
-    # 안 잡히면 2를 3으로 바꿔보면 됨
-    cap1 = cv2.VideoCapture(0)
-    cap2 = cv2.VideoCapture(1)
-    cap3 = cv2.VideoCapture(2)
+
+# CCTV별 detection_log 저장 간격 체크
+def should_save_detection_log(cctv_id):
+    now = time.time()
+    last_time = last_detection_log_time.get(cctv_id, 0)
+
+    if now - last_time >= DETECTION_LOG_COOLDOWN:
+        last_detection_log_time[cctv_id] = now
+        return True
+
+    return False
 
 
-    # ===============================
-    # 2. 카메라 연결 확인
-    # ===============================
-    if not cap1.isOpened():
-        print("Camera 1을 열 수 없습니다. index 0 확인 필요")
-
-    if not cap2.isOpened():
-        print("Camera 2를 열 수 없습니다. index 1 확인 필요")
-
-    if not cap3.isOpened():
-        print("Camera 3을 열 수 없습니다. index 2 확인 필요")
-
-    if not cap1.isOpened() and not cap2.isOpened() and not cap3.isOpened():
-        print("연결된 카메라가 없습니다.")
-        exit()
-
-
-    print("YOLO 3-camera detection start")
-    print("q 키를 누르면 종료됩니다.")
-
-
-    # ===============================
-    # 3. 프레임 단위 YOLO 감지
-    # ===============================
-    while True:
-        # 각 카메라에서 프레임 읽기
-        ret1, frame1 = cap1.read()
-        ret2, frame2 = cap2.read()
-        ret3, frame3 = cap3.read()
-
-        # -------------------------------
-        # Camera 1 감지
-        # -------------------------------
-        if ret1:
-            results1 = model(frame1, conf=0.5)
-
-            detection_result1 = extract_detection_result(results1, model)
-            detection_result1 = add_risk_result(detection_result1)
-
-            annotated1 = results1[0].plot()
-            detection_result1 = save_capture_if_needed(annotated1, "CCTV01", detection_result1)
-            save_event_with_capture("CCTV01", detection_result1)
-
-            print("Camera 1:", detection_result1)
-
-            cv2.imshow("Camera 1 Detection", annotated1)
-
-        # -------------------------------
-        # Camera 2 감지
-        # -------------------------------
-        if ret2:
-            results2 = model(frame2, conf=0.5)
-
-            detection_result2 = extract_detection_result(results2, model)
-            detection_result2 = add_risk_result(detection_result2)
-
-            annotated2 = results2[0].plot()
-            detection_result2 = save_capture_if_needed(annotated2, "CCTV02", detection_result2)
-            save_event_with_capture("CCTV02", detection_result2)
-
-            print("Camera 2:", detection_result2)
-
-            cv2.imshow("Camera 2 Detection", annotated2)
-
-        # -------------------------------
-        # Camera 3 감지
-        # -------------------------------
-        if ret3:
-            results3 = model(frame3, conf=0.5)
-
-            detection_result3 = extract_detection_result(results3, model)
-            detection_result3 = add_risk_result(detection_result3)
-
-            annotated3 = results3[0].plot()
-            detection_result3 = save_capture_if_needed(annotated3, "CCTV03", detection_result3)
-            save_event_with_capture("CCTV03", detection_result3)
-
-            print("Camera 3:", detection_result3)
-
-            cv2.imshow("Camera 3 Detection", annotated3)
-
-        # q 키 누르면 종료
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-
-
-    # ===============================
-    # 4. 종료 처리
-    # ===============================
-    cap1.release()
-    cap2.release()
-    cap3.release()
-    cv2.destroyAllWindows()
-
-# 서버에 카메라 전송
+# 서버에 카메라 프레임을 전송하고, 감지/위험판단/DB저장을 처리
 def generate_frames(camera_index, cctv_id, conf=0.5):
-
     cap = cv2.VideoCapture(camera_index)
 
     if not cap.isOpened():
@@ -306,23 +213,28 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
         if not success:
             break
 
+        # YOLO 객체 감지 수행
         results = model(frame, conf=conf)
 
+        # 저장된 위험구역 조회 후 진입 여부 판단
         danger_zones = get_danger_zones(cctv_id)
         in_danger_zone = check_danger_zone_intrusion(results, model, danger_zones)
 
+        # 감지 결과 정리 + 위험도 계산
         detection_result = extract_detection_result(results, model)
         detection_result = add_risk_result(
             detection_result,
             in_danger_zone=in_danger_zone
         )
 
+        # YOLO 박스가 표시된 프레임 생성
         annotated = results[0].plot()
 
         print("현재 CCTV ID:", cctv_id)
         print("위험구역 조회 결과:", danger_zones)
         print("위험구역 진입 여부:", in_danger_zone)
 
+        # 화면에 위험구역 사각형 표시
         for zone in danger_zones:
             cv2.rectangle(
                 annotated,
@@ -342,10 +254,19 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
                 2
             )
 
+        # 위험 이벤트 발생 시 캡처 이미지 저장 여부 판단
         detection_result = save_capture_if_needed(annotated, cctv_id, detection_result)
+
+        # 감지 분석 결과는 CCTV별 5초에 1번만 detection_log에 저장
+        if should_save_detection_log(cctv_id):
+            save_detection_log(cctv_id, detection_result)
+
         print("DB 저장 직전:", cctv_id, detection_result)
+
+        # 캡처가 있는 위험 이벤트만 event_log, capture_image에 저장
         save_event_with_capture(cctv_id, detection_result)
 
+        # 실시간 모니터링 화면에 표시할 최신 상태 저장
         latest_detection_status[cctv_id] = {
             "riskLevel": detection_result.get("risk_status", "-"),
             "riskText": get_risk_text(detection_result.get("risk_status", "-")),
@@ -364,6 +285,7 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
 
         print(cctv_id, detection_result)
 
+        # 프레임을 jpg로 변환해서 브라우저에 스트리밍
         ret, buffer = cv2.imencode(".jpg", annotated)
 
         if not ret:
@@ -378,6 +300,8 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
 
     cap.release()
 
+
+# 위험도 등급을 화면 표시용 한글 문구로 변환
 def get_risk_text(risk_status):
     if risk_status == "SAFE":
         return "정상"
@@ -390,6 +314,7 @@ def get_risk_text(risk_status):
     return "-"
 
 
+# 선택한 CCTV의 최신 감지 상태 반환
 def get_latest_detection_status(cctv_id):
     return latest_detection_status.get(cctv_id, {
         "riskLevel": "-",

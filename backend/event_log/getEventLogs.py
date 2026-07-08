@@ -2,15 +2,16 @@ from backend.util.db import get_engine
 from sqlalchemy import text
 from pathlib import Path
 
+
 CAMERA_MAP = {
-            "cctv01": 0,
-            "cctv02": 1,
-            "cctv03": 2,
-        }
+    "cctv01": 0,
+    "cctv02": 1,
+    "cctv03": 2,
+}
 
-# 이벤트 로그
+
+# 이벤트 로그 목록 조회
 def get_event_logs(start_date=None, end_date=None, cctv_id=None):
-
     conn = None
 
     try:
@@ -35,14 +36,17 @@ def get_event_logs(start_date=None, end_date=None, cctv_id=None):
 
         params = {}
 
+        # 시작일 필터
         if start_date:
             sql += " AND DATE(e.detected_at) >= :start_date"
             params["start_date"] = start_date
 
+        # 종료일 필터
         if end_date:
             sql += " AND DATE(e.detected_at) <= :end_date"
             params["end_date"] = end_date
 
+        # CCTV 선택 필터
         if cctv_id and cctv_id != "all":
             sql += " AND e.cctv_id = :cctv_id"
             params["cctv_id"] = cctv_id
@@ -61,8 +65,8 @@ def get_event_logs(start_date=None, end_date=None, cctv_id=None):
         if conn:
             conn.close()
 
-# 실시간 모니터링
-# 실시간 모니터링
+
+# 실시간 모니터링 상태 조회
 def get_monitoring_status(cctvId=None):
     conn = None
 
@@ -73,6 +77,7 @@ def get_monitoring_status(cctvId=None):
         # 1. 개별 CCTV 조회
         # =========================
         if cctvId:
+            # 선택한 CCTV의 최신 감지 기록 조회
             latest_detection_sql = text("""
                 SELECT
                     worker_count,
@@ -93,6 +98,7 @@ def get_monitoring_status(cctvId=None):
                 {"cctv_id": cctvId}
             ).mappings().first()
 
+            # 선택한 CCTV의 최신 위험 이벤트 조회
             latest_event_sql = text("""
                 SELECT
                     risk_score,
@@ -110,6 +116,7 @@ def get_monitoring_status(cctvId=None):
                 {"cctv_id": cctvId}
             ).mappings().first()
 
+            # 오늘 발생한 위반 유형별 건수 조회
             violation_count_sql = text("""
                 SELECT
                     SUM(CASE 
@@ -157,6 +164,7 @@ def get_monitoring_status(cctvId=None):
         # 2. 전체 CCTV 조회
         # =========================
         else:
+            # CCTV별 최신 감지 기록만 모아서 전체 현황 계산
             latest_detection_sql = text("""
                 SELECT
                     SUM(worker_count) AS worker_count,
@@ -181,6 +189,7 @@ def get_monitoring_status(cctvId=None):
 
             detection = conn.execute(latest_detection_sql).mappings().first()
 
+            # 오늘 발생한 이벤트 중 가장 높은 위험도 기준으로 전체 상태 계산
             latest_event_sql = text("""
                 SELECT
                     MAX(risk_score) AS risk_score,
@@ -196,6 +205,7 @@ def get_monitoring_status(cctvId=None):
 
             event = conn.execute(latest_event_sql).mappings().first()
 
+            # 오늘 전체 CCTV 기준 위반 유형별 건수 조회
             violation_count_sql = text("""
                 SELECT
                     SUM(CASE 
@@ -262,6 +272,7 @@ def get_monitoring_status(cctvId=None):
 
     except Exception as e:
         print("모니터링 상태 조회 오류:", e)
+
         return {
             "cctvId": cctvId if cctvId else "ALL",
             "riskLevel": "SAFE",
@@ -285,14 +296,15 @@ def get_monitoring_status(cctvId=None):
         if conn:
             conn.close()
 
-# 대시보드
+
+# 대시보드 데이터 조회
 def get_dashboard_data():
     conn = None
 
     try:
         conn = get_engine()
 
-        # 오늘 전체 경고/위반 수
+        # 오늘 발생한 전체 위험 이벤트 수
         today_warning_sql = text("""
             SELECT COUNT(*) AS count
             FROM event_log
@@ -313,9 +325,7 @@ def get_dashboard_data():
         ppe_rate = ppe_result["avg_ppe_rate"] if ppe_result else None
         ppe_rate = round(float(ppe_rate), 1) if ppe_rate is not None else 0
 
-        # CCTV 연결 상태
-        # 현재는 실제 카메라 장치 연결 여부가 아니라
-        # DB에 등록된 CCTV 중 사용중(is_active=1)인 CCTV 수를 기준으로 계산
+        # 등록된 CCTV 수와 사용 중 CCTV 수 조회
         cctv_sql = text("""
             SELECT
                 COUNT(*) AS total,
@@ -328,7 +338,7 @@ def get_dashboard_data():
         total_cctv = int(cctv_result["total"] or 0)
         connected_cctv = int(cctv_result["connected"] or 0)
 
-        # 오늘 최고 위험도
+        # 오늘 가장 높은 위험도 조회
         overall_sql = text("""
             SELECT risk_level, risk_score
             FROM event_log
@@ -351,7 +361,7 @@ def get_dashboard_data():
             "CRITICAL": "심각한 위험 상황입니다."
         }
 
-        # 최근 이벤트 5개
+        # 최근 발생한 이벤트 5건 조회
         recent_sql = text("""
             SELECT
                 DATE_FORMAT(e.detected_at, '%H:%i:%s') AS time,
@@ -427,13 +437,15 @@ def get_dashboard_data():
         if conn:
             conn.close()
 
-# 통계 분석
+
+# 통계 대시보드 데이터 조회
 def get_statistics_data(start_date=None, end_date=None):
     conn = None
 
     try:
         conn = get_engine()
 
+        # event_log 조회 조건
         where = "WHERE 1=1"
         params = {}
 
@@ -445,7 +457,7 @@ def get_statistics_data(start_date=None, end_date=None):
             where += " AND DATE(detected_at) <= :end_date"
             params["end_date"] = end_date
 
-        # 1. 요약
+        # 위험 이벤트 수와 평균 위험 점수 조회
         summary_sql = text(f"""
             SELECT
                 COUNT(*) AS warning_count,
@@ -456,7 +468,7 @@ def get_statistics_data(start_date=None, end_date=None):
 
         summary = conn.execute(summary_sql, params).mappings().first()
 
-        # 2. 전체 감지 건수 / PPE 착용률
+        # detection_log 조회 조건
         detection_where = "WHERE 1=1"
         detection_params = {}
 
@@ -468,6 +480,7 @@ def get_statistics_data(start_date=None, end_date=None):
             detection_where += " AND DATE(detected_at) <= :end_date"
             detection_params["end_date"] = end_date
 
+        # 감지 분석 횟수와 평균 PPE 착용률 조회
         detection_sql = text(f"""
             SELECT
                 COUNT(*) AS total_count,
@@ -478,7 +491,7 @@ def get_statistics_data(start_date=None, end_date=None):
 
         detection = conn.execute(detection_sql, detection_params).mappings().first()
 
-        # 3. 시간대별 경고 횟수
+        # 시간대별 위험 이벤트 수 조회
         hourly_sql = text(f"""
             SELECT
                 HOUR(detected_at) AS hour,
@@ -491,7 +504,7 @@ def get_statistics_data(start_date=None, end_date=None):
 
         hourly_rows = conn.execute(hourly_sql, params).mappings().all()
 
-        # 4. 위반 유형별 비율
+        # 위험 유형별 발생 비율 조회
         type_sql = text(f"""
             SELECT
                 violation_type AS type,
@@ -534,6 +547,7 @@ def get_statistics_data(start_date=None, end_date=None):
 
     except Exception as e:
         print("통계 조회 오류:", e)
+
         return {
             "summary": {
                 "totalCount": 0,
@@ -549,6 +563,8 @@ def get_statistics_data(start_date=None, end_date=None):
         if conn:
             conn.close()
 
+
+# 위험 이벤트와 캡처 이미지 정보를 DB에 저장
 def save_event_with_capture(cctv_id, detection_result):
     conn = None
 
@@ -561,14 +577,14 @@ def save_event_with_capture(cctv_id, detection_result):
         risk_score = detection_result.get("risk_score", 0)
         risk_level = detection_result.get("risk_status", "SAFE")
 
-        # 캡처가 실제로 저장된 경우에만 DB 저장
+        # 캡처가 없거나 위반 유형이 없으면 이벤트로 저장하지 않음
         if not capture_path or violation_type == "NONE":
             return None
 
         helmet_status = "미착용" if detection_result.get("no_helmet", 0) > 0 else "착용"
         vest_status = "미착용" if detection_result.get("no_safety_vest", 0) > 0 else "착용"
 
-        # 1. event_log 저장
+        # event_log에 위험 이벤트 저장
         event_sql = text("""
             INSERT INTO event_log (
                 cctv_id,
@@ -604,7 +620,7 @@ def save_event_with_capture(cctv_id, detection_result):
 
         event_id = result.lastrowid
 
-        # 2. capture_image 저장
+        # capture_image에 캡처 이미지 정보 저장
         file_name = Path(capture_path).name
 
         capture_sql = text("""
@@ -641,6 +657,75 @@ def save_event_with_capture(cctv_id, detection_result):
             conn.rollback()
 
         return None
+
+    finally:
+        if conn:
+            conn.close()
+
+
+# 전체 감지 분석 결과를 detection_log에 저장
+def save_detection_log(cctv_id, detection_result):
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        person_count = detection_result.get("person", 0)
+        helmet_count = detection_result.get("helmet", 0)
+        no_helmet_count = detection_result.get("no_helmet", 0)
+        vest_count = detection_result.get("safety_vest", 0)
+        no_vest_count = detection_result.get("no_safety_vest", 0)
+
+        # 사람 1명당 안전모 + 안전조끼 2개 기준으로 PPE 착용률 계산
+        if person_count > 0:
+            ppe_wear_rate = round(
+                ((helmet_count + vest_count) / (person_count * 2)) * 100,
+                1
+            )
+        else:
+            ppe_wear_rate = 0
+
+        # detection_log에 일반 감지 분석 결과 저장
+        sql = text("""
+            INSERT INTO detection_log (
+                cctv_id,
+                worker_count,
+                helmet_count,
+                no_helmet_count,
+                vest_count,
+                no_vest_count,
+                ppe_wear_rate
+            )
+            VALUES (
+                :cctv_id,
+                :worker_count,
+                :helmet_count,
+                :no_helmet_count,
+                :vest_count,
+                :no_vest_count,
+                :ppe_wear_rate
+            )
+        """)
+
+        conn.execute(sql, {
+            "cctv_id": cctv_id,
+            "worker_count": person_count,
+            "helmet_count": helmet_count,
+            "no_helmet_count": no_helmet_count,
+            "vest_count": vest_count,
+            "no_vest_count": no_vest_count,
+            "ppe_wear_rate": ppe_wear_rate
+        })
+
+        conn.commit()
+
+        print("감지 로그 저장 성공")
+
+    except Exception as e:
+        print("감지 로그 저장 오류:", e)
+
+        if conn:
+            conn.rollback()
 
     finally:
         if conn:
