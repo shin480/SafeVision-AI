@@ -14,3 +14,6 @@ __pycache__/
 Thumbs.db
 
 *.log
+
+static/captures/*
+!static/captures/.gitkeep
