@@ -461,17 +461,20 @@ def get_danger_zone_list():
 
         sql = text("""
             SELECT
-                zone_id,
-                cctv_id,
-                zone_name,
-                x1,
-                y1,
-                x2,
-                y2,
-                DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS created_at
-            FROM danger_zone
-            WHERE is_active = 1
-            ORDER BY created_at DESC
+                dz.zone_id,
+                dz.cctv_id,
+                c.cctv_name,
+                dz.zone_name,
+                dz.x1,
+                dz.y1,
+                dz.x2,
+                dz.y2,
+                DATE_FORMAT(dz.created_at, '%Y-%m-%d %H:%i:%s') AS created_at
+            FROM danger_zone dz
+            JOIN cctv c
+                ON dz.cctv_id = c.cctv_id
+            WHERE dz.is_active = 1
+            ORDER BY dz.created_at DESC
         """)
 
         result = conn.execute(sql).mappings().all()

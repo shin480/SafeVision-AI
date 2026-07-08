@@ -25,7 +25,7 @@ function renderZoneTable(zoneList) {
 
     tr.innerHTML = `
       <td>${zone.cctv_id}</td>
-      <td>${zone.cctv_id}</td>
+      <td>${zone.cctv_name}</td>
       <td>${zone.zone_name}</td>
       <td>
         X1:${zone.x1}, Y1:${zone.y1}, X2:${zone.x2}, Y2:${zone.y2}
