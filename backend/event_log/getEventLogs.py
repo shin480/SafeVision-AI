@@ -483,7 +483,7 @@ def get_statistics_data(start_date=None, end_date=None):
         # 감지 분석 횟수와 평균 PPE 착용률 조회
         detection_sql = text(f"""
             SELECT
-                COUNT(*) AS total_count,
+                SUM(worker_count) AS total_count,
                 AVG(ppe_wear_rate) AS avg_ppe_rate
             FROM detection_log
             {detection_where}
