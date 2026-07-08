@@ -357,7 +357,7 @@ if __name__ == "__main__":
         helmet_cls_path=r"runs\classify\helmet_cls\weights\best.pt",
         vest_cls_path=r"runs\classify\vest_cls\weights\best.pt",
         person_conf=0.25,
-        device=0,
+        device="cpu",
     )
 
     cap = cv2.VideoCapture(0)
