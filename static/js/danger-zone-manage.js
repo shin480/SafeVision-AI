@@ -28,7 +28,13 @@ function renderZoneTable(zoneList) {
       <td>${zone.cctv_name}</td>
       <td>${zone.zone_name}</td>
       <td>
-        X1:${zone.x1}, Y1:${zone.y1}, X2:${zone.x2}, Y2:${zone.y2}
+        <button
+          type="button"
+          class="coord-btn"
+          onclick="showZonePreview('${zone.cctv_id}', ${zone.x1}, ${zone.y1}, ${zone.x2}, ${zone.y2})"
+        >
+          X1:${zone.x1}, Y1:${zone.y1}, X2:${zone.x2}, Y2:${zone.y2}
+        </button>
       </td>
       <td>${formatDate(zone.updated_at)}</td>
       <td>
@@ -65,3 +71,34 @@ function formatDate(dateText) {
 }
 
 loadDangerZones();
+
+function showZonePreview(cctvId, x1, y1, x2, y2) {
+  const modal = document.getElementById("zonePreviewModal");
+  const video = document.getElementById("zonePreviewVideo");
+  const rect = document.getElementById("zonePreviewRect");
+
+  modal.style.display = "flex";
+  video.src = `/api/video-feed/${cctvId}`;
+
+  const originalWidth = 1280;
+  const originalHeight = 720;
+
+  const previewWidth = 800;
+  const previewHeight = 450;
+
+  const scaleX = previewWidth / originalWidth;
+  const scaleY = previewHeight / originalHeight;
+
+  rect.style.left = `${x1 * scaleX}px`;
+  rect.style.top = `${y1 * scaleY}px`;
+  rect.style.width = `${(x2 - x1) * scaleX}px`;
+  rect.style.height = `${(y2 - y1) * scaleY}px`;
+}
+
+function closeZonePreview() {
+  const modal = document.getElementById("zonePreviewModal");
+  const video = document.getElementById("zonePreviewVideo");
+
+  modal.style.display = "none";
+  video.src = "";
+}

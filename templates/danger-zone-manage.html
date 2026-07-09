@@ -11,6 +11,20 @@
 <body>
   <div id="sidebar-container"></div>
 
+  <div id="zonePreviewModal" class="zone-modal">
+    <div class="zone-modal-content">
+      <div class="zone-modal-header">
+        <h3>위험구역 미리보기</h3>
+        <button type="button" onclick="closeZonePreview()">×</button>
+      </div>
+
+      <div id="zonePreviewBox" class="zone-preview-box">
+        <img id="zonePreviewVideo" src="" alt="CCTV 화면" />
+        <div id="zonePreviewRect" class="zone-preview-rect"></div>
+      </div>
+    </div>
+  </div>
+
   <main class="main">
     <h1>위험구역 설정</h1>
 
