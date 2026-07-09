@@ -320,6 +320,17 @@ def get_dashboard_data():
         today_warning = conn.execute(today_warning_sql).mappings().first()
         today_warning_count = today_warning["count"] if today_warning else 0
 
+        yesterday_warning_sql = text("""
+            SELECT COUNT(*) AS count
+            FROM event_log
+            WHERE DATE(detected_at) = CURDATE() - INTERVAL 1 DAY
+        """)
+
+        yesterday_warning = conn.execute(yesterday_warning_sql).mappings().first()
+        yesterday_warning_count = yesterday_warning["count"] if yesterday_warning else 0
+
+        warning_change = today_warning_count - yesterday_warning_count
+
         # 오늘 평균 PPE 착용률
         ppe_sql = text("""
             SELECT AVG(ppe_wear_rate) AS avg_ppe_rate
@@ -330,6 +341,22 @@ def get_dashboard_data():
         ppe_result = conn.execute(ppe_sql).mappings().first()
         ppe_rate = ppe_result["avg_ppe_rate"] if ppe_result else None
         ppe_rate = round(float(ppe_rate), 1) if ppe_rate is not None else 0
+
+        yesterday_ppe_sql = text("""
+            SELECT AVG(ppe_wear_rate) AS avg_ppe_rate
+            FROM detection_log
+            WHERE DATE(detected_at) = CURDATE() - INTERVAL 1 DAY
+        """)
+
+        yesterday_ppe_result = conn.execute(yesterday_ppe_sql).mappings().first()
+
+        yesterday_ppe_rate = (
+            round(float(yesterday_ppe_result["avg_ppe_rate"]), 1)
+            if yesterday_ppe_result and yesterday_ppe_result["avg_ppe_rate"] is not None
+            else 0
+        )
+
+        ppe_change = round(ppe_rate - yesterday_ppe_rate, 1)
 
         # 등록된 CCTV 수와 사용 중 CCTV 수 조회
         cctv_sql = text("""
@@ -391,13 +418,13 @@ def get_dashboard_data():
             },
             "todayWarning": {
                 "count": today_warning_count,
-                "change": None,
-                "changeText": None
+                "change": f"{warning_change:+d}",
+                "changeText": "(어제 대비)"
             },
             "ppeRate": {
                 "rate": ppe_rate,
-                "change": None,
-                "changeText": None
+                "change": f"{ppe_change:+.1f}%",
+                "changeText": "(어제 대비)"
             },
             "cctv": {
                 "connected": connected_cctv,
