@@ -375,7 +375,7 @@ def get_dashboard_data():
         overall_sql = text("""
             SELECT risk_level, risk_score
             FROM event_log
-            WHERE DATE(detected_at) = CURDATE()
+            WHERE detected_at >= NOW() - INTERVAL 10 MINUTE
             ORDER BY risk_score DESC
             LIMIT 1
         """)
