@@ -362,14 +362,17 @@ def get_dashboard_data():
         cctv_sql = text("""
             SELECT
                 COUNT(*) AS total,
-                SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS connected
+                SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS connected,
+                SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) AS inactive
             FROM cctv
+            WHERE is_deleted = 0
         """)
 
         cctv_result = conn.execute(cctv_sql).mappings().first()
 
         total_cctv = int(cctv_result["total"] or 0)
         connected_cctv = int(cctv_result["connected"] or 0)
+        inactive_cctv = int(cctv_result["inactive"] or 0)
 
         # 오늘 가장 높은 위험도 조회
         overall_sql = text("""

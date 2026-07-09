@@ -136,7 +136,7 @@ function openEditModal(id) {
 }
 
 async function deleteCctv(id) {
-  const confirmed = confirm("해당 CCTV를 미사용 처리하시겠습니까?");
+  const confirmed = confirm("해당 CCTV를 삭제 하시겠습니까?");
 
   if (!confirmed) return;
 

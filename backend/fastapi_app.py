@@ -121,6 +121,7 @@ def cctv_list():
                 is_active,
                 DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS created_at
             FROM cctv
+            WHERE is_deleted = 0
             ORDER BY created_at DESC
         """)
 
@@ -262,7 +263,6 @@ def update_cctv(cctv_id: str, data: dict = Body(...)):
         if conn:
             conn.close()
 
-# CCTV 삭제 API - 실제 삭제가 아니라 미사용 처리
 @app.delete("/api/cctv/{cctv_id}")
 def delete_cctv(cctv_id: str):
     conn = None
@@ -270,10 +270,9 @@ def delete_cctv(cctv_id: str):
     try:
         conn = get_engine()
 
-        # 실제 삭제 대신 미사용 처리
         sql = text("""
             UPDATE cctv
-            SET is_active = 0
+            SET is_deleted = 1
             WHERE cctv_id = :cctv_id
         """)
 
@@ -286,23 +285,23 @@ def delete_cctv(cctv_id: str):
         if result.rowcount == 0:
             return {
                 "success": False,
-                "message": "처리할 CCTV가 없습니다."
+                "message": "삭제할 CCTV가 없습니다."
             }
 
         return {
             "success": True,
-            "message": "CCTV가 미사용 처리되었습니다."
+            "message": "CCTV가 삭제되었습니다."
         }
 
     except Exception as e:
-        print("CCTV 삭제/미사용 처리 오류:", e)
+        print("CCTV 삭제 오류:", e)
 
         if conn:
             conn.rollback()
 
         return {
             "success": False,
-            "message": "CCTV 삭제 처리 실패"
+            "message": "CCTV 삭제 실패"
         }
 
     finally:
