@@ -25,7 +25,7 @@ class CombinedDetection:
 
     crop_source: str | None = None  # "pose" or "bbox"
 
-
+# 사람 감지, 신체 부위 crop, 헬멧/조끼 분류를 하나로 묶은 통합 모델 클래스
 class PPECombinedModel:
     def __init__(
         self,
@@ -35,15 +35,15 @@ class PPECombinedModel:
         person_conf: float = 0.25,
         device: str | int | None = None,
     ):
-        self.pose_model = YOLO(pose_model_path)
-        self.helmet_model = YOLO(helmet_cls_path)
-        self.vest_model = YOLO(vest_cls_path)
+        self.pose_model = YOLO(pose_model_path) # 사람 탐지 및 pose keypoint 추출 모델
+        self.helmet_model = YOLO(helmet_cls_path) # 머리 crop 이미지를 입력받아 헬멧 착용 여부 분류
+        self.vest_model = YOLO(vest_cls_path) # 상체 crop 이미지를 입력받아 조끼 착용 여부 분류
 
-        self.person_conf = person_conf
-        self.device = device
+        self.person_conf = person_conf # 사람 감지 기준 confidence 값 저장
+        self.device = device # 모델 실행 장치 저장
 
     @staticmethod
-    def _clip_box(box, w, h):
+    def _clip_box(box, w, h): # 이미지 범위를 벗어난 bbox 좌표를 이미지 내부로 보정한다.
         x1, y1, x2, y2 = map(int, box)
 
         x1 = max(0, min(x1, w - 1))
@@ -54,7 +54,7 @@ class PPECombinedModel:
         return [x1, y1, x2, y2]
 
     @staticmethod
-    def _safe_crop(frame, box):
+    def _safe_crop(frame, box): # bbox 영역을 안전하게 crop하고, 잘못된 영역이면 None을 반환한다.
         h, w = frame.shape[:2]
         x1, y1, x2, y2 = PPECombinedModel._clip_box(box, w, h)
 
@@ -69,7 +69,7 @@ class PPECombinedModel:
         return crop
 
     @staticmethod
-    def _bbox_head_box(person_box):
+    def _bbox_head_box(person_box): # pose keypoint를 사용할 수 없을 때, 사람 bbox 기준으로 머리 영역을 추정한다.
         x1, y1, x2, y2 = person_box
         bw = x2 - x1
         bh = y2 - y1
@@ -80,7 +80,7 @@ class PPECombinedModel:
         return [x1 + pad_x, y1, x2 - pad_x, head_y2]
 
     @staticmethod
-    def _bbox_torso_box(person_box):
+    def _bbox_torso_box(person_box): # pose keypoint를 사용할 수 없을 때, 사람 bbox 기준으로 상체 영역을 추정한다.
         x1, y1, x2, y2 = person_box
         bw = x2 - x1
         bh = y2 - y1
@@ -92,7 +92,7 @@ class PPECombinedModel:
         return [x1 + pad_x, torso_y1, x2 - pad_x, torso_y2]
 
     @staticmethod
-    def _valid_point(kpts, idx, min_conf=0.35):
+    def _valid_point(kpts, idx, min_conf=0.35): # 특정 keypoint가 존재하고 confidence가 기준 이상인지 확인한다.
         """
         YOLOv8 pose keypoint index:
         0 nose
@@ -118,7 +118,7 @@ class PPECombinedModel:
 
         return np.array([x, y], dtype=np.float32)
 
-    def _pose_head_box(self, person_box, kpts):
+    def _pose_head_box(self, person_box, kpts): # 얼굴 keypoint를 이용해 머리 crop 영역을 계산한다.
         h_points = []
 
         for idx in [0, 1, 2, 3, 4]:
@@ -150,7 +150,7 @@ class PPECombinedModel:
 
         return [int(x1), int(y1), int(x2), int(y2)]
 
-    def _pose_torso_box(self, person_box, kpts):
+    def _pose_torso_box(self, person_box, kpts): # 어깨와 골반 keypoint를 이용해 상체 crop 영역을 계산한다.
         left_shoulder = self._valid_point(kpts, 5)
         right_shoulder = self._valid_point(kpts, 6)
 
@@ -190,12 +190,13 @@ class PPECombinedModel:
 
         return [int(x1), int(y1), int(x2), int(y2)]
 
-    def _get_crop_boxes(self, person_box, kpts):
+    def _get_crop_boxes(self, person_box, kpts): # pose 기반 crop 영역을 우선 사용하고, 실패 시 bbox 기반 영역으로 대체한다.
         head_box = self._pose_head_box(person_box, kpts)
         torso_box = self._pose_torso_box(person_box, kpts)
 
         crop_source = "pose"
 
+        # pose기반 head, torso영역 추출 실패 시 bbox기반 비율 기준 추출
         if head_box is None:
             head_box = self._bbox_head_box(person_box)
             crop_source = "bbox"
@@ -206,7 +207,7 @@ class PPECombinedModel:
 
         return head_box, torso_box, crop_source
 
-    def _classify_crop(self, model: YOLO, crop: np.ndarray) -> Tuple[str, float]:
+    def _classify_crop(self, model: YOLO, crop: np.ndarray) -> Tuple[str, float]: # crop 이미지를 분류 모델에 넣어 클래스명과 confidence를 반환한다.
         results = model(crop, verbose=False, device=self.device)
         probs = results[0].probs
 
@@ -216,7 +217,7 @@ class PPECombinedModel:
         class_name = results[0].names[top1]
         return class_name, conf
 
-    def predict(self, frame: np.ndarray) -> List[Dict[str, Any]]:
+    def predict(self, frame: np.ndarray) -> List[Dict[str, Any]]: # 입력 프레임에서 사람을 감지하고, 헬멧/조끼 착용 여부를 예측한다.
         h, w = frame.shape[:2]
 
         pose_results = self.pose_model(
@@ -247,8 +248,10 @@ class PPECombinedModel:
                 # shape: [num_person, 17, 3]
                 kpts = keypoints.data[idx].cpu().numpy()
 
+            # 머리, 상체 크롭해야 할 영역 추출
             head_box, torso_box, crop_source = self._get_crop_boxes(person_box, kpts)
 
+            # 이미지 범위를 벗어난 bbox 좌표를 이미지 내부로 보정
             head_box = self._clip_box(head_box, w, h)
             torso_box = self._clip_box(torso_box, w, h)
 
@@ -265,6 +268,7 @@ class PPECombinedModel:
             if head_crop is None or torso_crop is None:
                 continue
 
+            # 크롭된 이미지를 각각 모델에 입력해 결론 추출
             helmet_status, helmet_conf = self._classify_crop(self.helmet_model, head_crop)
             vest_status, vest_conf = self._classify_crop(self.vest_model, torso_crop)
 
@@ -287,7 +291,7 @@ class PPECombinedModel:
 
         return [asdict(d) for d in detections]
 
-    def draw(self, frame: np.ndarray, detections: List[Dict[str, Any]]) -> np.ndarray:
+    def draw(self, frame: np.ndarray, detections: List[Dict[str, Any]]) -> np.ndarray: # 예측 결과를 원본 프레임 위에 bbox와 텍스트로 시각화한다.
         output = frame.copy()
 
         for det in detections:

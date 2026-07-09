@@ -21,10 +21,10 @@ VEST = 3
 PERSON = 4
 
 CLASS_MAP = {
-    NO_HELMET: ("helmet", "no_helmet"),
-    HELMET: ("helmet", "helmet"),
-    NO_VEST: ("vest", "no_safety_vest"),
-    VEST: ("vest", "safety_vest"),
+    NO_HELMET: ("helmet", "no_helmet"), # no_helmet일 경우 helmet 폴더의 no_helmet에 저장
+    HELMET: ("helmet", "helmet"), # helmet일 경우 helmet 폴더의 helmet에 저장
+    NO_VEST: ("vest", "no_safety_vest"), # no_vest일 경우 vest 폴더의 no_vest에 저장
+    VEST: ("vest", "safety_vest"), # vest일 경우 vest 폴더의 vest에 저장
 }
 
 PADDING_RATIO = 0.15
@@ -55,13 +55,16 @@ def yolo_to_xyxy(line, img_w, img_h):
     return cls_id, x1, y1, x2, y2
 
 
+# 기존 박스를 패딩값으로 키우기
 def add_padding(x1, y1, x2, y2, img_w, img_h):
-    bw = x2 - x1
-    bh = y2 - y1
+    bw = x2 - x1 # 기존 박스 폭
+    bh = y2 - y1 # 기존 박스 높이
 
+    # 폭과 높이의 PADDING_RATIO(0.15)를 패딩값으로 지정
     pad_x = bw * PADDING_RATIO
     pad_y = bh * PADDING_RATIO
 
+    # 지정된 패딩값만큼 박스 크기 키우기
     x1 = max(0, int(x1 - pad_x))
     y1 = max(0, int(y1 - pad_y))
     x2 = min(img_w, int(x2 + pad_x))
@@ -136,16 +139,17 @@ def main():
                 if result is None:
                     continue
 
-                cls_id, x1, y1, x2, y2 = result
+                cls_id, x1, y1, x2, y2 = result # 라벨 한줄을 읽어 저장
 
                 if cls_id not in CLASS_MAP:
                     continue
 
-                dataset_type, class_name = CLASS_MAP[cls_id]
+                dataset_type, class_name = CLASS_MAP[cls_id] # 최종 저장 위치 확인
 
-                x1, y1, x2, y2 = add_padding(x1, y1, x2, y2, img_w, img_h)
+                # add_padding으로 크롭할 범위 조정
+                x1, y1, x2, y2 = add_padding(x1, y1, x2, y2, img_w, img_h) 
 
-                crop = img[y1:y2, x1:x2]
+                crop = img[y1:y2, x1:x2] # 이미지를 범위에 따라 크롭
 
                 if crop.size == 0:
                     continue
@@ -154,9 +158,9 @@ def main():
                 if ch < MIN_CROP_SIZE or cw < MIN_CROP_SIZE:
                     continue
 
-                save_name = f"{label_path.stem}_{idx}.jpg"
+                save_name = f"{label_path.stem}_{idx}.jpg" # 이미지 이름 생성
 
-                if dataset_type == "helmet":
+                if dataset_type == "helmet": # 저장 위치에 따라 크롭한 이미지 저장
                     save_path = HELMET_DST / dst_split / class_name / save_name
                 else:
                     save_path = VEST_DST / dst_split / class_name / save_name
