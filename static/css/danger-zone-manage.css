@@ -188,3 +188,9 @@
   background: rgba(239, 68, 68, 0.22);
   box-sizing: border-box;
 }
+
+#zonePreviewVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}

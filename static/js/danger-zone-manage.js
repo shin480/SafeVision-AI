@@ -80,19 +80,21 @@ function showZonePreview(cctvId, x1, y1, x2, y2) {
   modal.style.display = "flex";
   video.src = `/api/video-feed/${cctvId}`;
 
-  const originalWidth = 1280;
-  const originalHeight = 720;
+  video.onload = () => {
+    const originalWidth = video.naturalWidth;
+    const originalHeight = video.naturalHeight;
 
-  const previewWidth = 800;
-  const previewHeight = 450;
+    const previewWidth = video.clientWidth;
+    const previewHeight = video.clientHeight;
 
-  const scaleX = previewWidth / originalWidth;
-  const scaleY = previewHeight / originalHeight;
+    const scaleX = previewWidth / originalWidth;
+    const scaleY = previewHeight / originalHeight;
 
-  rect.style.left = `${x1 * scaleX}px`;
-  rect.style.top = `${y1 * scaleY}px`;
-  rect.style.width = `${(x2 - x1) * scaleX}px`;
-  rect.style.height = `${(y2 - y1) * scaleY}px`;
+    rect.style.left = `${x1 * scaleX}px`;
+    rect.style.top = `${y1 * scaleY}px`;
+    rect.style.width = `${(x2 - x1) * scaleX}px`;
+    rect.style.height = `${(y2 - y1) * scaleY}px`;
+  };
 }
 
 function closeZonePreview() {
