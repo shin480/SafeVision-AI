@@ -167,15 +167,11 @@ async function loadCctvList() {
 }
 
 async function loadAllMonitoringStatus() {
-  const activeCctvList = cctvList.filter(
-    (cctv) => Number(cctv.is_active) === 1
-  );
+  const activeCctvList = cctvList.filter((cctv) => Number(cctv.is_active) === 1);
 
-  await Promise.all(
-    activeCctvList.map((cctv) =>
-      loadMonitoringStatus(cctv.id)
-    )
-  );
+  for (const cctv of activeCctvList) {
+    loadMonitoringStatus(cctv.id);
+  }
 }
 
 async function loadMonitoringStatus(cctvId) {
