@@ -533,18 +533,19 @@ def get_danger_zone_list():
             SELECT
                 dz.zone_id,
                 dz.cctv_id,
-                c.cctv_name,
+                COALESCE(c.cctv_name, '-') AS cctv_name,
                 dz.zone_name,
                 dz.x1,
                 dz.y1,
                 dz.x2,
                 dz.y2,
-                DATE_FORMAT(dz.created_at, '%Y-%m-%d %H:%i:%s') AS created_at
+                DATE_FORMAT(dz.updated_at, '%Y-%m-%d %H:%i:%s') AS updated_at
             FROM danger_zone dz
-            JOIN cctv c
+            LEFT JOIN cctv c
                 ON dz.cctv_id = c.cctv_id
+            AND c.is_deleted = 0
             WHERE dz.is_active = 1
-            ORDER BY dz.created_at DESC
+            ORDER BY dz.updated_at DESC
         """)
 
         result = conn.execute(sql).mappings().all()

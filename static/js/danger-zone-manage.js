@@ -30,7 +30,7 @@ function renderZoneTable(zoneList) {
       <td>
         X1:${zone.x1}, Y1:${zone.y1}, X2:${zone.x2}, Y2:${zone.y2}
       </td>
-      <td>${formatDate(zone.created_at)}</td>
+      <td>${formatDate(zone.updated_at)}</td>
       <td>
         <button type="button" class="delete-btn" onclick="deleteZone(${zone.zone_id})">
           삭제
@@ -46,7 +46,7 @@ async function deleteZone(zoneId) {
   const ok = confirm("해당 위험구역을 삭제하시겠습니까?");
   if (!ok) return;
 
-  const response = await fetch(`/api/danger-zone/${zoneId}`, {
+  const response = await fetch(`/api/danger-zone/zone/${zoneId}`, {
     method: "DELETE",
   });
 
