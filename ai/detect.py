@@ -196,12 +196,13 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
         return
 
     while True:
+        # CCTV 프레임 읽기
         success, frame = cap.read()
 
         if not success:
             break
 
-        # YOLO 객체 감지 수행
+        # YOLO 기반 PPE 감지 수행
         detections = model.predict(frame)
 
         danger_zones = get_danger_zones(cctv_id)
@@ -212,7 +213,7 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
             detection_result,
             in_danger_zone=in_danger_zone
         )
-
+        # 감지 결과를 화면에 표시할 프레임으로 변환
         annotated = model.draw(frame, detections)
 
         print("현재 CCTV ID:", cctv_id)
@@ -270,7 +271,7 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
 
         print(cctv_id, detection_result)
 
-        # 프레임을 jpg로 변환해서 브라우저에 스트리밍
+        # 브라우저 스트리밍용 JPG 변환
         ret, buffer = cv2.imencode(".jpg", annotated)
 
         if not ret:
