@@ -271,7 +271,7 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
 
         print(cctv_id, detection_result)
 
-        # 브라우저 스트리밍용 JPG 변환
+        # 프레임을 JPG로 변환해서 브라우저에 스트리밍
         ret, buffer = cv2.imencode(".jpg", annotated)
 
         if not ret:
