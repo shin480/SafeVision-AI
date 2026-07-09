@@ -379,3 +379,50 @@ body {
 .close-fullscreen-btn:hover {
   background: #ffffff;
 }
+
+/* =======================
+   알람
+======================= */
+.risk-alert-toast {
+  display: none;
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+
+  min-width: 320px;
+  padding: 16px 20px;
+
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+
+  align-items: center;
+  gap: 12px;
+}
+
+.risk-alert-toast.show {
+  display: flex;
+}
+
+.risk-alert-toast img {
+  width: 36px;
+  height: 36px;
+}
+
+.risk-alert-toast p {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.risk-alert-warning {
+  border-left: 6px solid #f59e0b;
+}
+
+.risk-alert-danger {
+  border-left: 6px solid #ff3333;
+}
+
+.risk-alert-critical {
+  border-left: 6px solid #8b1515;
+}

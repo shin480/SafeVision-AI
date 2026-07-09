@@ -166,6 +166,18 @@ async function loadCctvList() {
   }
 }
 
+async function loadAllMonitoringStatus() {
+  const activeCctvList = cctvList.filter(
+    (cctv) => Number(cctv.is_active) === 1
+  );
+
+  await Promise.all(
+    activeCctvList.map((cctv) =>
+      loadMonitoringStatus(cctv.id)
+    )
+  );
+}
+
 async function loadMonitoringStatus(cctvId) {
   if (!cctvId) {
     resetMonitoringView();
@@ -180,7 +192,29 @@ async function loadMonitoringStatus(cctvId) {
     }
 
     const data = await response.json();
+
     renderMonitoring(data);
+
+    // if (data.riskLevel === "SAFE") {
+    //   lastAlertKey = null;
+    // }
+
+    const alertKey =
+      `${data.riskLevel}-${data.riskScore}-${data.violations?.helmet}-${data.violations?.vest}-${data.violations?.zone}`;
+
+    if (data.riskLevel === "SAFE") {
+      lastAlertMap[cctvId] = null;
+      return;
+    }
+
+    if (data.riskLevel && alertKey !== lastAlertMap[cctvId]) {
+      showRiskAlert(
+        data.riskLevel,
+        `${cctvId} ${data.riskText || "위험 상황이 감지되었습니다."}`
+      );
+
+      lastAlertMap[cctvId] = alertKey;
+    }
   } catch (error) {
     console.error(error);
     resetMonitoringView();
@@ -337,11 +371,15 @@ function initMonitoring() {
 
         showAllCctv();
 
-        loadMonitoringStatus("");
+        loadAllMonitoringStatus();
+
+        if (monitoringTimer) {
+          clearInterval(monitoringTimer);
+        }
 
         monitoringTimer = setInterval(() => {
-          loadMonitoringStatus("");
-        }, 1000);
+          loadAllMonitoringStatus();
+        }, 500);
 
         return;
       }
@@ -365,3 +403,59 @@ function initMonitoring() {
 }
 
 document.addEventListener("DOMContentLoaded", initMonitoring);
+
+/* =========================
+   알람
+========================= */
+let lastAlertMap = {};
+let alertTimer = null;
+
+function showRiskAlert(level, message) {
+  if (level === "SAFE") return;
+
+  const toast = document.getElementById("riskAlertToast");
+  const icon = document.getElementById("riskAlertIcon");
+  const levelText = document.getElementById("riskAlertLevel");
+  const messageText = document.getElementById("riskAlertMessage");
+
+  if (!toast || !icon || !levelText || !messageText) return;
+
+  toast.className = "risk-alert-toast";
+
+  switch (level) {
+    case "WARNING":
+      icon.src = "../static/img/warning.svg";
+      levelText.style.color = "#f59e0b";
+      toast.classList.add("risk-alert-warning");
+      break;
+
+    case "DANGER":
+      icon.src = "../static/img/danger.svg";
+      levelText.style.color = "#ff3333";
+      toast.classList.add("risk-alert-danger");
+      break;
+
+    case "CRITICAL":
+      icon.src = "../static/img/critical.svg";
+      levelText.style.color = "#8b1515";
+      toast.classList.add("risk-alert-critical");
+      break;
+
+    default:
+      return;
+  }
+
+  levelText.textContent = level;
+  messageText.textContent = message;
+
+  toast.classList.add("show");
+
+  if (alertTimer) {
+    clearTimeout(alertTimer);
+  }
+
+  alertTimer = setTimeout(() => {
+    toast.classList.remove("show");
+    alertTimer = null;
+  }, 7000);
+}
