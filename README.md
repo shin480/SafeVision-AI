@@ -337,7 +337,7 @@ http://127.0.0.1:5000
 | GET    | `/api/danger-zone`           | 위험구역 목록 조회    |
 | GET    | `/api/danger-zone/{cctv_id}` | CCTV별 위험구역 조회 |
 | POST   | `/api/danger-zone`           | 위험구역 저장       |
-| DELETE | `/api/danger-zone/{cctv_id}` | 위험구역 초기화      |
+| DELETE | `/api/danger-zone/zone/{zone_id}` | 위험구역 초기화      |
 
 ## 10. 위험도 기준
 
@@ -408,6 +408,8 @@ CCTV별 위험구역 정보를 저장합니다.
 | Backend / DB  | FastAPI API 구현, Flask 라우팅, MariaDB 연동, 이벤트 로그 및 통계 데이터 처리 |
 | Frontend / UI | 대시보드, 모니터링, 이벤트 로그, 통계, 위험구역, CCTV 관리 화면 구현               |
 | 문서 / 발표       | 요구사항정의서, UI설계서, WBS, 테스트내역서, 발표자료 정리                      |
+
+※ 본 프로젝트는 AI 모델 학습·감지·위험 판단 영역은 팀원별 역할을 나누어 진행하였고, Backend / DB / Frontend 구현은 기능 단위로 팀원들이 공동 개발하였습니다.
 
 ## 13. 프로젝트 산출물
 
