@@ -191,7 +191,9 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
     cap = cv2.VideoCapture(camera_index)
 
     if not cap.isOpened():
-        raise RuntimeError(f"카메라{camera_index} 열기 실패")
+        print(f"카메라 열기 실패: {camera_index}")
+        cap.release()
+        return
 
     while True:
         success, frame = cap.read()

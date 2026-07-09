@@ -161,12 +161,40 @@ function openDetail(id) {
 
   document.getElementById("detailModal").classList.add("show");
 
-  document.getElementById("saveBtn").onclick = () => {
-    event.status = document.getElementById("statusSelect").value;
-    event.memo = document.getElementById("memoInput").value;
+  document.getElementById("saveBtn").onclick = async () => {
+    const newStatus = document.getElementById("statusSelect").value;
+    const comment = document.getElementById("memoInput").value;
 
-    renderTable(events);
-    closeDetail();
+    try {
+      const response = await fetch(`/api/events/${event.id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: newStatus,
+          comment: comment,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        alert(result.message || "처리 상태 저장에 실패했습니다.");
+        return;
+      }
+
+      event.status = newStatus;
+      event.memo = comment;
+
+      renderTable(events);
+      closeDetail();
+
+      alert("저장되었습니다.");
+    } catch (error) {
+      console.error("이벤트 처리 상태 저장 오류:", error);
+      alert("서버 오류로 처리 상태를 저장하지 못했습니다.");
+    }
   };
 }
 

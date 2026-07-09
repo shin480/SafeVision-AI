@@ -278,7 +278,9 @@ function showAllCctv() {
 
     grid.innerHTML = "";
 
-    const activeCctvList = cctvList.slice(0, 6);
+    const activeCctvList = cctvList
+      .filter((cctv) => Number(cctv.is_active) === 1)
+      .slice(0, 6);
     const count = activeCctvList.length;
 
     grid.className = `video-grid grid-${count}`;

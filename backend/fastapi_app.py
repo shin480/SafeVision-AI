@@ -8,7 +8,8 @@ from fastapi.responses import StreamingResponse
 from backend.event_log.getEventLogs import (
     get_event_logs,
     get_dashboard_data,
-    get_statistics_data
+    get_statistics_data,
+    update_event_status
 )
 
 from ai.detect import generate_frames, get_latest_detection_status
@@ -20,6 +21,62 @@ CAMERA_MAP = {
     "cctv02": 1,
     "cctv03": 2,
 }
+
+def normalize_camera_source(stream_url):
+    if stream_url is None:
+        return None
+
+    source = str(stream_url).strip()
+
+    if not source:
+        return None
+
+    # USB 웹캠 번호: "0", "1", "2"
+    if source.isdigit():
+        return int(source)
+
+    # 자기 자신을 다시 호출하는 주소는 허용하지 않음
+    if "/api/video-feed/" in source:
+        return None
+
+    # 실제 rtsp/http/file 경로는 그대로 OpenCV에 넘김
+    return source
+
+
+def get_camera_source(cctv_id):
+    conn = None
+
+    try:
+        conn = get_engine()
+
+        sql = text("""
+            SELECT stream_url, is_active
+            FROM cctv
+            WHERE cctv_id = :cctv_id
+            LIMIT 1
+        """)
+
+        row = conn.execute(sql, {"cctv_id": cctv_id}).mappings().first()
+
+        if row and int(row["is_active"] or 0) != 1:
+            return None
+
+        # 기본 CCTV는 DB stream_url보다 하드코딩 웹캠 번호 우선
+        if cctv_id in CAMERA_MAP:
+            return CAMERA_MAP[cctv_id]
+
+        if row:
+            return normalize_camera_source(row["stream_url"])
+
+        return None
+
+    except Exception as e:
+        print("CCTV 영상 소스 조회 오류:", e)
+        return CAMERA_MAP.get(cctv_id)
+
+    finally:
+        if conn:
+            conn.close()
 
 app.add_middleware(SessionMiddleware, secret_key="motmachugetjyo")
 
@@ -255,7 +312,10 @@ def delete_cctv(cctv_id: str):
 @app.get("/api/video-feed/{cctv_id}")
 def video_feed(cctv_id: str):
 
-    camera = CAMERA_MAP.get(cctv_id)
+    camera = get_camera_source(cctv_id)
+
+    print("요청 CCTV:", cctv_id)
+    print("최종 카메라 소스:", camera)
 
     if camera is None:
         return {"success": False}
@@ -286,6 +346,17 @@ def events(
         "success": True,
         "data": data
     }
+
+@app.put("/api/events/{event_id}/status")
+def change_event_status(event_id: int, data: dict = Body(...)):
+    new_status = data.get("status")
+    comment = data.get("comment")
+
+    return update_event_status(
+        event_id=event_id,
+        new_status=new_status,
+        comment=comment
+    )
 
 # -----------------------------
 # dashboard

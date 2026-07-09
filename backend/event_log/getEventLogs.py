@@ -26,7 +26,13 @@ def get_event_logs(start_date=None, end_date=None, cctv_id=None):
                 e.risk_level AS risk,
                 e.risk_score AS score,
                 e.status AS status,
-                '' AS memo,
+                COALESCE((
+                    SELECT eal.comment
+                    FROM event_action_log eal
+                    WHERE eal.event_id = e.event_id
+                    ORDER BY eal.updated_at DESC, eal.action_id DESC
+                    LIMIT 1
+                ), '') AS memo,
                 e.capture_path
             FROM event_log e
             JOIN cctv c
@@ -726,6 +732,101 @@ def save_detection_log(cctv_id, detection_result):
 
         if conn:
             conn.rollback()
+
+    finally:
+        if conn:
+            conn.close()
+
+# 이벤트 처리 저장
+def update_event_status(event_id, new_status, comment=None):
+    conn = None
+
+    allowed_status = ["미확인", "확인", "조치완료"]
+
+    if new_status not in allowed_status:
+        return {
+            "success": False,
+            "message": "허용되지 않은 상태값입니다."
+        }
+
+    try:
+        conn = get_engine()
+
+        current_sql = text("""
+            SELECT status
+            FROM event_log
+            WHERE event_id = :event_id
+        """)
+
+        current = conn.execute(
+            current_sql,
+            {"event_id": event_id}
+        ).mappings().first()
+
+        if not current:
+            return {
+                "success": False,
+                "message": "이벤트를 찾을 수 없습니다."
+            }
+
+        previous_status = current["status"]
+
+        update_sql = text("""
+            UPDATE event_log
+            SET status = :new_status
+            WHERE event_id = :event_id
+        """)
+
+        conn.execute(update_sql, {
+            "event_id": event_id,
+            "new_status": new_status
+        })
+
+        action_sql = text("""
+            INSERT INTO event_action_log (
+                event_id,
+                previous_status,
+                new_status,
+                comment
+            )
+            VALUES (
+                :event_id,
+                :previous_status,
+                :new_status,
+                :comment
+            )
+        """)
+
+        conn.execute(action_sql, {
+            "event_id": event_id,
+            "previous_status": previous_status,
+            "new_status": new_status,
+            "comment": comment
+        })
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": "이벤트 처리 상태가 저장되었습니다.",
+            "data": {
+                "event_id": event_id,
+                "previous_status": previous_status,
+                "new_status": new_status,
+                "comment": comment
+            }
+        }
+
+    except Exception as e:
+        print("이벤트 상태 변경 오류:", e)
+
+        if conn:
+            conn.rollback()
+
+        return {
+            "success": False,
+            "message": "이벤트 상태 변경에 실패했습니다."
+        }
 
     finally:
         if conn:

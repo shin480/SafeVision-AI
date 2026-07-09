@@ -101,9 +101,20 @@ def monitoring_status():
 def event_log():
     return render_template("event-log.html")
 
+@app.route("/api/events/<int:event_id>/status", methods=["PUT"])
+def change_event_status(event_id):
+    response = requests.put(
+        f"{FASTAPI_URL}/api/events/{event_id}/status",
+        json=request.get_json()
+    )
+
+    return jsonify(response.json())
+
 @app.route("/statistics")
 def statistics():
     return render_template("statistics.html")
+
+
 
 # ----------------
 # 공통 사이드바
