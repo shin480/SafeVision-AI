@@ -218,23 +218,24 @@ class PPECombinedModel:
         return class_name, conf
 
     def predict(self, frame: np.ndarray) -> List[Dict[str, Any]]: # 입력 프레임에서 사람을 감지하고, 헬멧/조끼 착용 여부를 예측한다.
-        h, w = frame.shape[:2]
+        h, w = frame.shape[:2] # 입력 이미지 높이, 너비 가져오기
 
-        pose_results = self.pose_model(
+        pose_results = self.pose_model( # 사람 탐지. bbox와 keypoint 얻기
             frame,
             conf=self.person_conf,
             verbose=False,
             device=self.device,
         )
 
-        result = pose_results[0]
+        result = pose_results[0] # 감지 결과 추출
 
         if result.boxes is None:
             return []
 
-        detections: List[CombinedDetection] = []
+        detections: List[CombinedDetection] = [] # 탐지 종합 결과가 들어갈 detections 리스트 생성
 
-        boxes = result.boxes
+        # 감지된 사람들의 bbox와 pose keypoint 정보를 분리
+        boxes = result.boxes 
         keypoints = result.keypoints
 
         for idx, box in enumerate(boxes):
