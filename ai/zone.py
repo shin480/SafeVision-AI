@@ -37,6 +37,29 @@ def normalize_zone(zone):
         "y2": max(y1, y2)
     }
 
+def scale_zone(
+    danger_zone,
+    frame_width,
+    frame_height,
+    base_width=1280,
+    base_height=720
+):
+    """
+    1280x720 기준으로 저장된 위험구역 좌표를
+    실제 카메라 프레임 크기에 맞게 변환
+    """
+
+    zone = normalize_zone(danger_zone)
+
+    scale_x = frame_width / base_width
+    scale_y = frame_height / base_height
+
+    return {
+        "x1": int(zone["x1"] * scale_x),
+        "y1": int(zone["y1"] * scale_y),
+        "x2": int(zone["x2"] * scale_x),
+        "y2": int(zone["y2"] * scale_y)
+    }
 
 def is_in_danger_zone(center_x, center_y, danger_zone):
     """
@@ -51,14 +74,29 @@ def is_in_danger_zone(center_x, center_y, danger_zone):
     )
 
 
-def check_danger_zone_violation(bbox, danger_zone):
+def check_danger_zone_violation(
+    bbox,
+    danger_zone,
+    frame_width,
+    frame_height
+):
     """
-    bbox 중심점이 위험구역 안에 있으면 True 반환
+    bbox 중심점이 실제 영상 크기로 변환된 위험구역 안에 있는지 판단
     """
 
     center_x, center_y = get_center(bbox)
 
-    return is_in_danger_zone(center_x, center_y, danger_zone)
+    scaled_zone = scale_zone(
+        danger_zone,
+        frame_width,
+        frame_height
+    )
+
+    return is_in_danger_zone(
+        center_x,
+        center_y,
+        scaled_zone
+    )
 
 
 def create_danger_zone_event(camera_id, bbox, danger_zone):
@@ -90,13 +128,28 @@ def create_danger_zone_event(camera_id, bbox, danger_zone):
     return event
 
 
-def check_and_create_event(camera_id, bbox, danger_zone):
+def check_and_create_event(
+    camera_id,
+    bbox,
+    danger_zone,
+    frame_width,
+    frame_height
+):
     """
     진입 여부 판단 후, 진입이면 이벤트 생성
     진입 아니면 None 반환
     """
 
-    if check_danger_zone_violation(bbox, danger_zone):
-        return create_danger_zone_event(camera_id, bbox, danger_zone)
+    if check_danger_zone_violation(
+        bbox,
+        danger_zone,
+        frame_width,
+        frame_height
+    ):
+        return create_danger_zone_event(
+            camera_id,
+            bbox,
+            danger_zone
+        )
 
     return None
