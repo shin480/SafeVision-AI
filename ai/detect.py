@@ -317,3 +317,6 @@ def get_latest_detection_status(cctv_id):
         "violationType": "NONE",
         "captureUrl": None
     })
+
+def get_all_latest_detection_status():
+    return latest_detection_status.copy()

@@ -12,7 +12,11 @@ from backend.event_log.getEventLogs import (
     update_event_status
 )
 
-from ai.detect import generate_frames, get_latest_detection_status
+from ai.detect import (
+    generate_frames,
+    get_latest_detection_status,
+    get_all_latest_detection_status
+)
 
 app = FastAPI()
 
@@ -323,6 +327,13 @@ def video_feed(cctv_id: str):
         generate_frames(camera, cctv_id),
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
+
+@app.get("/api/monitoring/status-all")
+def monitoring_status_all():
+    return {
+        "success": True,
+        "data": get_all_latest_detection_status()
+    }
 
 
 @app.get("/api/monitoring/status")

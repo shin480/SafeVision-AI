@@ -161,16 +161,42 @@ async function loadCctvList() {
     document.querySelector("#videoGrid").classList.remove("hidden");
 
     showAllCctv();
+
+    // 전체 CCTV의 최신 상태를 바로 1회 조회
+    loadAllMonitoringStatus();
+
+    // 이후 0.5초마다 전체 CCTV 상태 조회
+    if (monitoringTimer) {
+      clearInterval(monitoringTimer);
+    }
+
+    monitoringTimer = setInterval(() => {
+      loadAllMonitoringStatus();
+    }, 500);
   } catch (error) {
     console.error(error);
   }
 }
 
 async function loadAllMonitoringStatus() {
-  const activeCctvList = cctvList.filter((cctv) => Number(cctv.is_active) === 1);
+  try {
+    const response = await fetch("/api/monitoring/status-all");
 
-  for (const cctv of activeCctvList) {
-    loadMonitoringStatus(cctv.id);
+    if (!response.ok) {
+      throw new Error("전체 CCTV 상태 조회 실패");
+    }
+
+    const result = await response.json();
+
+    if (!result.success || !result.data) {
+      return;
+    }
+
+    Object.entries(result.data).forEach(([cctvId, data]) => {
+      processRiskAlert(cctvId, data);
+    });
+  } catch (error) {
+    console.error("전체 CCTV 상태 조회 오류:", error);
   }
 }
 
@@ -195,26 +221,38 @@ async function loadMonitoringStatus(cctvId) {
     //   lastAlertKey = null;
     // }
 
-    const alertKey =
-      `${data.riskLevel}-${data.riskScore}-${data.violations?.helmet}-${data.violations?.vest}-${data.violations?.zone}`;
-
-    if (data.riskLevel === "SAFE") {
-      lastAlertMap[cctvId] = null;
-      return;
-    }
-
-    if (data.riskLevel && alertKey !== lastAlertMap[cctvId]) {
-      showRiskAlert(
-        data.riskLevel,
-        `${cctvId} ${data.riskText || "위험 상황이 감지되었습니다."}`
-      );
-
-      lastAlertMap[cctvId] = alertKey;
-    }
+    processRiskAlert(cctvId, data);
   } catch (error) {
     console.error(error);
     resetMonitoringView();
   }
+}
+
+function processRiskAlert(cctvId, data) {
+  const level = data.riskLevel;
+
+  if (!level || level === "-") {
+    return;
+  }
+
+  if (level === "SAFE") {
+    lastAlertMap[cctvId] = null;
+    return;
+  }
+
+  const alertKey =
+    `${level}-${data.riskScore}-${data.violations?.helmet}-${data.violations?.vest}-${data.violations?.zone}`;
+
+  if (alertKey === lastAlertMap[cctvId]) {
+    return;
+  }
+
+  showRiskAlert(
+    level,
+    `${cctvId} ${data.riskText || "위험 상황이 감지되었습니다."}`
+  );
+
+  lastAlertMap[cctvId] = alertKey;
 }
 
 function updateVideoFeed(cctvId) {

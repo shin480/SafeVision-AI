@@ -94,6 +94,14 @@ def monitoring_status():
     )
     return jsonify(response.json())
 
+@app.route("/api/monitoring/status-all")
+def monitoring_status_all():
+    response = requests.get(
+        f"{FASTAPI_URL}/api/monitoring/status-all"
+    )
+
+    return jsonify(response.json())
+
 # ----------------
 # 이벤트 로그 / 통계
 # ----------------
