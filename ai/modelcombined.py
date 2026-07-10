@@ -311,9 +311,11 @@ class PPECombinedModel:
 
             # person box - green
             cv2.rectangle(output, (x1, y1), (x2, y2), (255, 0, 0), 2)
+            object_id = det.get("object_id", det.get("person_id", ""))
+
             cv2.putText(
                 output,
-                f"person {person_conf:.2f} [{crop_source}]",
+                f"person #{object_id} {person_conf:.2f} [{crop_source}]",
                 (x1, max(20, y1 - 10)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.55,
