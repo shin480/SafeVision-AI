@@ -16,6 +16,7 @@ from backend.util.db import get_engine
 BASE_DIR = Path(__file__).resolve().parent.parent
 # MODEL_PATH = BASE_DIR / "ai" / "models" / "weights" / "ppe100.pt"
 
+
 # YOLO 모델 한 번만 로드
 # model = YOLO(str(MODEL_PATH))
 model = PPECombinedModel( # 최종 모델
@@ -34,6 +35,85 @@ latest_detection_status = {}
 DETECTION_LOG_COOLDOWN = 5
 last_detection_log_time = {}
 
+OBJECT_IOU_THRESHOLD = 0.3
+OBJECT_TRACK_TTL = 3
+
+object_trackers = {}
+
+
+def bbox_iou(box_a, box_b):
+    ax1, ay1, ax2, ay2 = box_a
+    bx1, by1, bx2, by2 = box_b
+
+    inter_x1 = max(ax1, bx1)
+    inter_y1 = max(ay1, by1)
+    inter_x2 = min(ax2, bx2)
+    inter_y2 = min(ay2, by2)
+
+    inter_w = max(0, inter_x2 - inter_x1)
+    inter_h = max(0, inter_y2 - inter_y1)
+    inter_area = inter_w * inter_h
+
+    area_a = max(0, ax2 - ax1) * max(0, ay2 - ay1)
+    area_b = max(0, bx2 - bx1) * max(0, by2 - by1)
+    union_area = area_a + area_b - inter_area
+
+    if union_area <= 0:
+        return 0
+
+    return inter_area / union_area
+
+
+def assign_object_ids(cctv_id, detections):
+    now = time.time()
+
+    tracker = object_trackers.setdefault(cctv_id, {
+        "next_id": 1,
+        "objects": {},
+        "logged_keys": set()
+    })
+
+    objects = tracker["objects"]
+
+    for object_id in list(objects.keys()):
+        if now - objects[object_id]["last_seen"] > OBJECT_TRACK_TTL:
+            del objects[object_id]
+            tracker["logged_keys"] = {
+                key for key in tracker["logged_keys"]
+                if not key.startswith(f"{object_id}:")
+            }
+
+    used_ids = set()
+
+    for det in detections:
+        bbox = det.get("bbox")
+        best_id = None
+        best_iou = 0
+
+        for object_id, obj in objects.items():
+            if object_id in used_ids:
+                continue
+
+            iou = bbox_iou(bbox, obj["bbox"])
+
+            if iou > best_iou:
+                best_iou = iou
+                best_id = object_id
+
+        if best_id is None or best_iou < OBJECT_IOU_THRESHOLD:
+            best_id = tracker["next_id"]
+            tracker["next_id"] += 1
+
+        det["object_id"] = best_id
+
+        objects[best_id] = {
+            "bbox": bbox,
+            "last_seen": now
+        }
+
+        used_ids.add(best_id)
+
+    return detections
 
 # YOLO 감지 결과를 JSON 형태로 정리하는 함수
 def extract_detection_result(detections):
@@ -103,6 +183,71 @@ def check_danger_zone_intrusion(detections, danger_zones):
 
     return False
 
+def is_detection_in_danger_zone(det, danger_zones):
+    x1, y1, x2, y2 = det["bbox"]
+
+    cx = (x1 + x2) // 2
+    cy = (y1 + y2) // 2
+
+    for zone in danger_zones:
+        zx1 = min(zone["x1"], zone["x2"])
+        zy1 = min(zone["y1"], zone["y2"])
+        zx2 = max(zone["x1"], zone["x2"])
+        zy2 = max(zone["y1"], zone["y2"])
+
+        if zx1 <= cx <= zx2 and zy1 <= cy <= zy2:
+            return True
+
+    return False
+
+
+def make_object_violation_keys(detections, danger_zones):
+    keys = []
+
+    for det in detections:
+        object_id = det.get("object_id")
+
+        if object_id is None:
+            continue
+
+        violations = []
+
+        if det.get("helmet_status") != "helmet":
+            violations.append("no_helmet")
+
+        if det.get("vest_status") != "safety_vest":
+            violations.append("no_safety_vest")
+
+        if is_detection_in_danger_zone(det, danger_zones):
+            violations.append("danger_zone")
+
+        if violations:
+            keys.append(f"{object_id}:{'+'.join(violations)}")
+
+    return keys
+
+
+def should_save_object_event(cctv_id, violation_keys):
+    if not violation_keys:
+        return True
+
+    tracker = object_trackers.setdefault(cctv_id, {
+        "next_id": 1,
+        "objects": {},
+        "logged_keys": set()
+    })
+
+    logged_keys = tracker["logged_keys"]
+    new_keys = [key for key in violation_keys if key not in logged_keys]
+
+    if not new_keys:
+        return False
+
+    for key in violation_keys:
+        logged_keys.add(key)
+
+    return True
+
 
 # 감지 결과를 바탕으로 위험도 점수와 등급 추가
 def add_risk_result(detection_result, in_danger_zone=False):
@@ -151,9 +296,22 @@ def save_capture_if_needed(capture_frame, cctv_id, detection_result):
     risk_status = detection_result["risk_status"]
     violation_type = make_violation_type(detection_result)
 
+    violation_keys = detection_result.get("object_violation_keys", [])
+
+    if not should_save_object_event(cctv_id, violation_keys):
+        detection_result["capture_path"] = None
+        detection_result["capture_url"] = None
+        detection_result["violation_type"] = violation_type
+        return detection_result
+
+    capture_key = violation_type
+
+    if violation_keys:
+        capture_key = f"{violation_type}:{'|'.join(violation_keys)}"
+
     capture_path = get_capture_path_if_needed(
         cctv_id=cctv_id,
-        violation_type=violation_type,
+        violation_type=capture_key,
         status=risk_status
     )
 
@@ -204,11 +362,16 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
 
         # YOLO 기반 PPE 감지 수행
         detections = model.predict(frame)
+        detections = assign_object_ids(cctv_id, detections)
 
         danger_zones = get_danger_zones(cctv_id)
         in_danger_zone = check_danger_zone_intrusion(detections, danger_zones)
 
         detection_result = extract_detection_result(detections)
+        detection_result["object_violation_keys"] = make_object_violation_keys(
+            detections,
+            danger_zones
+        )
         detection_result = add_risk_result(
             detection_result,
             in_danger_zone=in_danger_zone
