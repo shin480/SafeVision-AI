@@ -5,6 +5,7 @@ from collections import Counter
 import time
 
 from ai.risk import calculate_risk
+from ai.zone import check_danger_zone_violation, scale_zone
 from ai.modelcombined import PPECombinedModel
 from ai.capture import get_capture_path_if_needed
 from backend.event_log.getEventLogs import save_event_with_capture, save_detection_log
@@ -161,47 +162,30 @@ def get_danger_zones(cctv_id):
         db.close()
 
 
-# 감지된 객체의 중심점이 위험구역 안에 들어왔는지 확인
-def check_danger_zone_intrusion(detections, danger_zones):
-    if not detections:
-        return False
-
-    for det in detections:
-        x1, y1, x2, y2 = det["bbox"]
-
-        cx = (x1 + x2) // 2
-        cy = (y1 + y2) // 2
-
-        for zone in danger_zones:
-            zx1 = min(zone["x1"], zone["x2"])
-            zy1 = min(zone["y1"], zone["y2"])
-            zx2 = max(zone["x1"], zone["x2"])
-            zy2 = max(zone["y1"], zone["y2"])
-
-            if zx1 <= cx <= zx2 and zy1 <= cy <= zy2:
-                return True
-
-    return False
-
-def is_detection_in_danger_zone(det, danger_zones):
-    x1, y1, x2, y2 = det["bbox"]
-
-    cx = (x1 + x2) // 2
-    cy = (y1 + y2) // 2
-
+def is_detection_in_danger_zone(
+    det,
+    danger_zones,
+    frame_width,
+    frame_height
+):
     for zone in danger_zones:
-        zx1 = min(zone["x1"], zone["x2"])
-        zy1 = min(zone["y1"], zone["y2"])
-        zx2 = max(zone["x1"], zone["x2"])
-        zy2 = max(zone["y1"], zone["y2"])
-
-        if zx1 <= cx <= zx2 and zy1 <= cy <= zy2:
+        if check_danger_zone_violation(
+            det["bbox"],
+            zone,
+            frame_width,
+            frame_height
+        ):
             return True
 
     return False
 
 
-def make_object_violation_keys(detections, danger_zones):
+def make_object_violation_keys(
+    detections,
+    danger_zones,
+    frame_width,
+    frame_height
+):
     keys = []
 
     for det in detections:
@@ -218,7 +202,12 @@ def make_object_violation_keys(detections, danger_zones):
         if det.get("vest_status") != "safety_vest":
             violations.append("no_safety_vest")
 
-        if is_detection_in_danger_zone(det, danger_zones):
+        if is_detection_in_danger_zone(
+            det,
+            danger_zones,
+            frame_width,
+            frame_height
+        ):
             violations.append("danger_zone")
 
         if violations:
@@ -365,12 +354,27 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
         detections = assign_object_ids(cctv_id, detections)
 
         danger_zones = get_danger_zones(cctv_id)
-        in_danger_zone = check_danger_zone_intrusion(detections, danger_zones)
+
+        frame_height, frame_width = frame.shape[:2]
+
+        in_danger_zone = False
+
+        for det in detections:
+            if is_detection_in_danger_zone(
+                det,
+                danger_zones,
+                frame_width,
+                frame_height
+            ):
+                in_danger_zone = True
+                break
 
         detection_result = extract_detection_result(detections)
         detection_result["object_violation_keys"] = make_object_violation_keys(
             detections,
-            danger_zones
+            danger_zones,
+            frame_width,
+            frame_height
         )
         detection_result = add_risk_result(
             detection_result,
@@ -384,11 +388,24 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
         print("위험구역 진입 여부:", in_danger_zone)
 
         # 화면에 위험구역 사각형 표시
+        frame_height, frame_width = annotated.shape[:2]
+
         for zone in danger_zones:
+            scaled_zone = scale_zone(
+                zone,
+                frame_width,
+                frame_height
+            )
+
+            draw_x1 = scaled_zone["x1"]
+            draw_y1 = scaled_zone["y1"]
+            draw_x2 = scaled_zone["x2"]
+            draw_y2 = scaled_zone["y2"]
+
             cv2.rectangle(
                 annotated,
-                (zone["x1"], zone["y1"]),
-                (zone["x2"], zone["y2"]),
+                (draw_x1, draw_y1),
+                (draw_x2, draw_y2),
                 (0, 0, 255),
                 3
             )
@@ -396,7 +413,7 @@ def generate_frames(camera_index, cctv_id, conf=0.5):
             cv2.putText(
                 annotated,
                 zone["zone_name"],
-                (zone["x1"], zone["y1"] - 10),
+                (draw_x1, max(20, draw_y1 - 10)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.8,
                 (0, 0, 255),

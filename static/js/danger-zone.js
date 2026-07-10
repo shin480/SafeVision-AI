@@ -252,14 +252,25 @@ async function saveDangerZone() {
     return;
   }
 
+  // DB에는 항상 1280×720 기준 좌표로 저장
+  const BASE_WIDTH = 1280;
+  const BASE_HEIGHT = 720;
+
+  const scaleX = BASE_WIDTH / canvas.clientWidth;
+  const scaleY = BASE_HEIGHT / canvas.clientHeight;
+
   const payload = {
     cctv_id: cctvSelect.value,
     zone_name: zoneNameInput.value.trim() || "위험구역 1",
-    x1: zone.x1,
-    y1: zone.y1,
-    x2: zone.x2,
-    y2: zone.y2,
+
+    x1: Math.round(zone.x1 * scaleX),
+    y1: Math.round(zone.y1 * scaleY),
+    x2: Math.round(zone.x2 * scaleX),
+    y2: Math.round(zone.y2 * scaleY),
   };
+
+  console.log("캔버스 기준 좌표:", zone);
+  console.log("1280×720 변환 좌표:", payload);
 
   try {
     const response = await fetch("/api/danger-zone", {
